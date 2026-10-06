@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potential - The Energy Vault</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @keyframes glint { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(200%) skewX(-15deg); } }
+        @keyframes pulse-slow { 0% { box-shadow: 0 0 20px rgba(16,185,129,0.2); } 50% { box-shadow: 0 0 40px rgba(16,185,129,0.5); } 100% { box-shadow: 0 0 20px rgba(16,185,129,0.2); } }
+        @keyframes gradient-x { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes float-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes fall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        @keyframes pan-bg { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+        @keyframes spin-slow { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes wander {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        
+        .animate-gradient-x { background-size: 200% 200%; animation: gradient-x 15s ease infinite; }
+        .animate-float { animation: float-slow 4s ease-in-out infinite; }
+        .animate-pulse-slow { animation: pulse-slow 3s infinite; }
+        .animate-wander { animation: wander 10s ease-in-out infinite; }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #0f172a; touch-action: none; overscroll-behavior: none; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        const GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz9ZrA5Qd4qsMieQOmEsF92wUyTLD3WYZlzqLWSWpfzwnjO3pbEACe_QqTBOwXTR0sWQQ/exec";
+
+        const IconWrapper = ({ name, size=24, className="", fill="none" }) => {
+            const ref = useRef(null);
+            useEffect(() => {
+                if (ref.current && window.lucide) {
+                    window.lucide.createIcons({
+                        root: ref.current,
+                        attrs: { width: size, height: size, class: className, fill: fill }
+                    });
+                }
+            }, [name, size, className, fill]);
+            return <span ref={ref} style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center'}}><i data-lucide={name}></i></span>;
+        };
+
+        const Play = (p) => <IconWrapper name="play" {...p} />;
+        const RotateCcw = (p) => <IconWrapper name="rotate-ccw" {...p} />;
+        const Activity = (p) => <IconWrapper name="activity" {...p} />;
+        const ChevronRight = (p) => <IconWrapper name="chevron-right" {...p} />;
+        const Info = (p) => <IconWrapper name="info" {...p} />;
+        const Award = (p) => <IconWrapper name="award" {...p} />;
+        const BookOpen = (p) => <IconWrapper name="book-open" {...p} />;
+        const Unlock = (p) => <IconWrapper name="unlock" {...p} />;
+        const Pause = (p) => <IconWrapper name="pause" {...p} />;
+        const LineChart = (p) => <IconWrapper name="line-chart" {...p} />;
+        const ArrowDownCircle = (p) => <IconWrapper name="arrow-down-circle" {...p} />;
+        const Lightbulb = (p) => <IconWrapper name="lightbulb" {...p} />;
+        const CheckCircle2 = (p) => <IconWrapper name="check-circle-2" {...p} />;
+        const XCircle = (p) => <IconWrapper name="x-circle" {...p} />;
+        const LayoutGrid = (p) => <IconWrapper name="layout-grid" {...p} />;
+        const Zap = (p) => <IconWrapper name="zap" {...p} />;
+        const Trophy = (p) => <IconWrapper name="trophy" {...p} />;
+        const Shield = (p) => <IconWrapper name="shield" {...p} />;
+        const HelpCircle = (p) => <IconWrapper name="help-circle" {...p} />;
+        const Route = (p) => <IconWrapper name="route" {...p} />;
+        const ArrowRightCircle = (p) => <IconWrapper name="arrow-right-circle" {...p} />;
+        const Target = (p) => <IconWrapper name="target" {...p} />;
+        const RefreshCw = (p) => <IconWrapper name="refresh-cw" {...p} />;
+        const Hexagon = (p) => <IconWrapper name="hexagon" {...p} />;
+        const Settings = (p) => <IconWrapper name="settings" {...p} />;
+        const Trash2 = (p) => <IconWrapper name="trash-2" {...p} />;
+        const FastForward = (p) => <IconWrapper name="fast-forward" {...p} />;
+        const User = (p) => <IconWrapper name="user" {...p} />;
+        const Clock = (p) => <IconWrapper name="clock" {...p} />;
+        const Star = (p) => <IconWrapper name="star" {...p} />;
+
+        const GAME_STAGES = {
+            LANDING: 'LANDING',
+            REGISTRATION: 'REGISTRATION',
+            LEVEL_SELECT: 'LEVEL_SELECT',
+            PLAYING: 'PLAYING',
+            ABOUT: 'ABOUT',
+            EQUATION_VAULT: 'EQUATION_VAULT',
+            PROGRESS: 'PROGRESS',
+            MASTERY_REPORT: 'MASTERY_REPORT',
+            SETTINGS: 'SETTINGS'
+        };
+
+        const LEVELS = [
+            { id: 1, title: "The First Drop", objective: "Discover where the energy is stored.", badge: "HEIGHT HUNTER", badgeDesc: "Discovered Gravitational Potential Energy" },
+            { id: 2, title: "The Height Challenge", objective: "Store exactly the required energy.", badge: "ENERGY ENGINEER", badgeDesc: "Mastered mass and height configuration" },
+            { id: 3, title: "The Falling Orb", objective: "Release the object and observe the energy transformation.", badge: "ENERGY TRANSFORMER", badgeDesc: "Witnessed Potential to Kinetic conversion" },
+            { id: 4, title: "The Invisible Reference", objective: "Choose your zero. Discover what stays the same.", badge: "REFERENCE MASTER", badgeDesc: "Mastered reference levels and path independence." },
+            { id: 5, title: "The Spring Vault", objective: "Store energy in the configuration of a spring.", badge: "SPRING MASTER", badgeDesc: "Discovered elastic potential energy." },
+            { id: 6, title: "The Conservation Chamber", objective: "Energy is changing form. Can you control the chain?", badge: "CONSERVATION MASTER", badgeDesc: "Completed an ideal mechanical-energy conservation challenge." },
+            { id: 7, title: "The Conservative Force Maze", objective: "Reach the destination using the physics of the maze.", badge: "PATH BREAKER", badgeDesc: "Used path independence to solve the Conservative Force Maze." },
+            { id: 8, title: "The Energy Observatory", objective: "Read the potential energy landscape.", badge: "LANDSCAPE MASTER", badgeDesc: "Mastered the relationship between potential energy, force, and kinetic energy." },
+            { id: 9, title: "The Energy Forge", objective: "Design a system that safely stores the required energy.", badge: "ENERGY ARCHITECT", badgeDesc: "Designed a functioning multi-stage energy system." },
+            { id: 10, title: "The Energy Core", objective: "Stabilize the failing Energy Core using physics principles.", badge: "CORE STABILIZER", badgeDesc: "Completed the Energy Core final challenge." }
+        ];
+
+        const EQUATIONS = [
+            { id: 'pe', category: 'GRAVITATIONAL', title: "Gravitational Potential Energy", formula: "V = mgh", desc: "Energy stored due to an object's position relative to a reference level." },
+            { id: 'ke', category: 'KINETIC', title: "Kinetic Energy", formula: "K = ½mv²", desc: "Energy that an object possesses due to its motion." },
+            { id: 'te', category: 'WORK & ENERGY', title: "Mechanical Energy", formula: "E = K + V", desc: "Total mechanical energy is the sum of kinetic and potential energy." },
+            { id: 'conv', category: 'KINETIC', title: "Conversion (Fall from Rest)", formula: "v = √(2gh)", desc: "Velocity acquired when potential energy is fully converted to kinetic energy." },
+            { id: 'delta_v', category: 'GRAVITATIONAL', title: "Change in Potential Energy", formula: "ΔV = V₂ - V₁", desc: "The difference in potential energy between two positions." },
+            { id: 'work_pe', category: 'WORK & ENERGY', title: "Work by Gravity", formula: "W_g = -ΔV", desc: "Work done by a conservative force equals the negative change in potential energy." },
+            { id: 'conservative', category: 'WORK & ENERGY', title: "Conservative Force", formula: "W_A→B", desc: "Work between two points depends only on initial and final positions, not the path taken." },
+            { id: 'epe', category: 'ELASTIC', title: "Elastic Potential Energy", formula: "U = ½kx²", desc: "Energy stored in the deformation of an ideal spring relative to its natural length." },
+            { id: 'hooke', category: 'ELASTIC', title: "Hooke's Law", formula: "F = -kx", desc: "The restoring force of an ideal spring is proportional to its displacement and acts toward equilibrium." },
+            { id: 'mech_energy_comb', category: 'WORK & ENERGY', title: "Combined Mechanical Energy", formula: "E = K + U_g + U_s", desc: "Total mechanical energy in an ideal system remains constant through transformations." },
+            { id: 'closed_path', category: 'WORK & ENERGY', title: "Closed Path Work", formula: "W_closed = 0", desc: "The net work done by a conservative force over any closed loop is zero." },
+            { id: 'v_x', category: 'POTENTIAL-ENERGY GRAPHS', title: "Potential Energy Function", formula: "V = V(x)", desc: "Potential energy varies with position across the landscape." },
+            { id: 'f_dvdx', category: 'POTENTIAL-ENERGY GRAPHS', title: "Force from Potential", formula: "F = -dV/dx", desc: "Force is the negative slope of the potential energy curve." },
+            { id: 'turning_pt', category: 'POTENTIAL-ENERGY GRAPHS', title: "Turning Point", formula: "E = V(x)", desc: "When total energy equals potential energy, kinetic energy is zero and the object turns around." }
+        ];
+
+        const INITIAL_GAME_STATE = {
+            stage: GAME_STAGES.LANDING,
+            currentLevel: 1, 
+            playerXP: 0,
+            unlockedLevels: [1], 
+            unlockedEquations: ['pe', 'ke', 'te', 'epe', 'hooke', 'mech_energy_comb', 'v_x', 'f_dvdx'],
+            completedMissions: [],
+            badges: [],
+            hintsUsed: 0,
+            playerInfo: { name: '', grade: '', division: '', rollNo: '' },
+            startTime: null,
+            endTime: null,
+            levelScores: {}
+        };
+
+        const INITIAL_SIM_STATE = {
+            mass: 2.0, gravity: 9.8, 
+            orbY: 200, orbX: 500, referenceY: 500, 
+            springK: 150, springX: 0, 
+            isDragging: false, isDraggingRef: false, isFalling: false, isPaused: false, isDetached: false, 
+            velocity: 0, pixelsPerMeter: 40, springPPM: 100, time: 0,
+            history: [], initialFallState: null, hasLanded: false, initialTotalEnergy: 0,
+            l6Completed: false, 
+            frictionEnabled: false, l7Path: 'A', l7Progress: 0, l7Animating: false, workInput: '',
+            l8X: 300, l8V: 0, l8TotalE: 250, l8Mode: 'ANALYZE',
+            l9Height: 8, l9Mass: 2.0, l9SpringK: 200, l9MaxCompression: 0, l9State: 'IDLE',
+            l10Stage: 1, coreStability: 0
+        };
+
+        const sendProgressToGoogleSheet = async (state) => {
+            if (!GOOGLE_SHEETS_WEB_APP_URL || GOOGLE_SHEETS_WEB_APP_URL.includes("YOUR_WEB_APP_URL_HERE")) {
+                return; 
+            }
+            try {
+                const timeTakenSecs = state.endTime ? Math.floor((state.endTime - state.startTime)/1000) : Math.floor((Date.now() - state.startTime)/1000);
+                
+                const mins = Math.floor(timeTakenSecs / 60).toString().padStart(2, '0');
+                const secs = (timeTakenSecs % 60).toString().padStart(2, '0');
+                const formattedTime = `${mins}:${secs}`;
+
+                let masteryRating = "Explorer";
+                if (state.completedMissions.length >= 10) masteryRating = "Energy Master";
+                else if (state.completedMissions.length >= 6) masteryRating = "Energy Architect";
+                else if (state.completedMissions.length >= 3) masteryRating = "Energy Strategist";
+
+                const payload = {
+                    name: state.playerInfo.name, 
+                    class: state.playerInfo.grade, 
+                    division: state.playerInfo.division, 
+                    rollNumber: state.playerInfo.rollNo,
+                    totalXP: state.playerXP, 
+                    totalTime: formattedTime, 
+                    badgesEarned: state.badges.length,
+                    masteryRating: masteryRating,
+                    levelXP: state.levelScores
+                };
+                
+                fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+                    method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                }).catch(err => console.debug("Sheets background sync exception", err));
+            } catch(e) { console.debug("Error preparing sheets payload"); }
+        };
+
+        const GlassPanel = ({ children, className = "", onClick = null, glow = false }) => (
+            <div onClick={onClick} className={`bg-slate-800/80 backdrop-blur-md border border-slate-600/50 rounded-xl shadow-2xl transition-all duration-300 ${glow ? 'shadow-[0_0_30px_rgba(34,211,238,0.4)] border-cyan-400/70' : ''} ${className}`}>
+                {children}
+            </div>
+        );
+
+        const CyberButton = ({ children, onClick, variant = 'primary', disabled = false, className = "", icon: Icon, type="button" }) => {
+            const baseStyle = "relative group overflow-hidden rounded-lg font-semibold tracking-wide transition-all duration-300 flex items-center justify-center gap-2 select-none touch-manipulation min-h-[44px]";
+            
+            const variants = {
+                primary: "bg-cyan-600 text-white border-2 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.8)] hover:bg-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,1)] px-8 py-3 text-lg font-bold",
+                secondary: "bg-slate-700 text-white border-2 border-slate-500 shadow-[0_0_10px_rgba(0,0,0,0.8)] hover:bg-slate-600 px-6 py-2",
+                action: "bg-amber-500 text-slate-900 border-2 border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.8)] hover:bg-amber-400 px-6 py-2",
+                success: "bg-emerald-600 text-white border-2 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.8)] hover:bg-emerald-500 hover:shadow-[0_0_25px_rgba(16,185,129,1)] px-6 py-2",
+                ghost: "bg-slate-800 text-slate-100 border-2 border-slate-600 hover:text-white hover:bg-slate-700 px-4 py-2 shadow-lg",
+                danger: "bg-red-600 text-white border-2 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.8)] hover:bg-red-500 px-6 py-2",
+                purple: "bg-purple-600 text-white border-2 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.8)] hover:bg-purple-500 hover:shadow-[0_0_25px_rgba(168,85,247,1)] px-6 py-2",
+                pink: "bg-pink-600 text-white border-2 border-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.8)] hover:bg-pink-500 hover:shadow-[0_0_25px_rgba(236,72,153,1)] px-6 py-2"
+            };
+
+            return (
+                <button type={type} onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer active:scale-95'} ${className}`}>
+                {!disabled && <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[glint_1.5s_ease-in-out_infinite]" />}
+                {Icon && <Icon size={20} />}
+                {children}
+                </button>
+            );
+        };
+
+        const Modal = ({ title, children, icon: Icon, type = 'info' }) => {
+            const colors = {
+                info: 'border-cyan-500/50 shadow-[0_0_50px_rgba(6,182,212,0.4)] text-cyan-300',
+                success: 'border-green-500/50 shadow-[0_0_50px_rgba(34,197,94,0.4)] text-green-300',
+                warning: 'border-amber-500/50 shadow-[0_0_50px_rgba(245,158,11,0.4)] text-amber-300',
+                danger: 'border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.4)] text-red-300',
+            };
+
+            return (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300 px-4">
+                <GlassPanel className={`w-full max-w-lg p-8 flex flex-col items-center text-center ${colors[type].split(' ')[0]} ${colors[type].split(' ')[1]}`}>
+                    {Icon && <Icon className={`${colors[type].split(' ')[2]} mb-4`} size={48} />}
+                    <h2 className="text-2xl font-light tracking-widest text-white uppercase mb-6 drop-shadow-md">{String(title)}</h2>
+                    {children}
+                </GlassPanel>
+                </div>
+            );
+        };
+
+        const InsightToast = ({ message, onClose }) => (
+            <div className="absolute top-24 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-top-4 fade-in duration-300 w-full max-w-xl px-4">
+                <GlassPanel className="px-6 py-4 flex items-center gap-4 border-l-4 border-l-cyan-400 shadow-[0_0_40px_rgba(6,182,212,0.5)] bg-slate-800/95 w-full">
+                <Info className="text-cyan-400 shrink-0" size={24} />
+                <p className="text-white font-serif italic text-lg flex-1">{String(message)}</p>
+                <button onClick={onClose} className="ml-2 text-slate-300 hover:text-white shrink-0 p-2 min-h-[44px]"><XCircle size={24}/></button>
+                </GlassPanel>
+            </div>
+        );
+
+        const GlobalTimer = ({ gameState }) => {
+            const [elapsedTime, setElapsedTime] = useState(0);
+
+            useEffect(() => {
+                if (!gameState.startTime) return;
+                const interval = setInterval(() => {
+                const end = gameState.endTime || Date.now();
+                setElapsedTime(Math.floor((end - gameState.startTime) / 1000));
+                }, 1000);
+                return () => clearInterval(interval);
+            }, [gameState.startTime, gameState.endTime]);
+
+            const mins = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            const secs = (elapsedTime % 60).toString().padStart(2, '0');
+
+            return (
+                <div className="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-600 shadow-inner">
+                <Clock className="text-amber-400" size={16} />
+                <span className="text-sm font-mono font-bold text-amber-100 tracking-wider">{mins}:{secs}</span>
+                </div>
+            );
+        };
+
+        const RegistrationScreen = ({ onRegister, onBack }) => {
+            const [formData, setFormData] = useState({ name: '', grade: '', division: '', rollNo: '' });
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!formData.name || !formData.grade || !formData.division || !formData.rollNo) {
+                setError("All fields are required to enter the Energy Vault.");
+                return;
+                }
+                onRegister(formData);
+            };
+
+            return (
+                <div className="relative w-full h-screen bg-slate-950 flex flex-col items-center justify-center overflow-hidden p-4 animate-gradient-x bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900">
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#4c1d95_1px,transparent_1px),linear-gradient(to_bottom,#4c1d95_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none animate-[pan-bg_20s_linear_infinite]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#0f172a_100%)] pointer-events-none" />
+                    
+                    <GlassPanel className="p-8 w-full max-w-md border-purple-500/70 shadow-[0_0_60px_rgba(168,85,247,0.4)] flex flex-col gap-6 animate-in slide-in-from-bottom-8 duration-700 z-10 bg-slate-800/95 backdrop-blur-xl">
+                        <h2 className="text-2xl font-light tracking-widest text-white uppercase text-center flex flex-col items-center gap-3">
+                        <User className="text-purple-400 drop-shadow-md" size={36}/>
+                        Player Registration
+                        </h2>
+                        {error && <div className="text-red-400 text-xs text-center font-mono bg-red-900/40 py-2 rounded border border-red-500/50">{error}</div>}
+                        
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                            <input type="text" placeholder="Full Name" className="bg-slate-900 border-2 border-slate-600 p-3 rounded text-white focus:outline-none focus:border-purple-400 font-mono transition-colors shadow-inner" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                            <div className="grid grid-cols-2 gap-4">
+                            <input type="text" placeholder="Class" className="bg-slate-900 border-2 border-slate-600 p-3 rounded text-white focus:outline-none focus:border-purple-400 font-mono transition-colors shadow-inner" value={formData.grade} onChange={e => setFormData({...formData, grade: e.target.value})} />
+                            <input type="text" placeholder="Division" className="bg-slate-900 border-2 border-slate-600 p-3 rounded text-white focus:outline-none focus:border-purple-400 font-mono transition-colors shadow-inner" value={formData.division} onChange={e => setFormData({...formData, division: e.target.value})} />
+                            </div>
+                            <input type="text" placeholder="Roll Number" className="bg-slate-900 border-2 border-slate-600 p-3 rounded text-white focus:outline-none focus:border-purple-400 font-mono transition-colors shadow-inner" value={formData.rollNo} onChange={e => setFormData({...formData, rollNo: e.target.value})} />
+                            
+                            <CyberButton variant="success" type="submit" className="mt-4" icon={CheckCircle2}>AUTHORIZE</CyberButton>
+                            <CyberButton variant="pink" onClick={onBack} type="button">RETURN HOME</CyberButton>
+                        </form>
+                    </GlassPanel>
+                    
+                    <div className="absolute bottom-6 flex flex-col items-center text-slate-300 font-mono text-xs tracking-wide z-10 pointer-events-none drop-shadow-lg">
+                    <span>Created by <span className="text-white font-bold">Hrishikesh M (PGT Physics)</span></span>
+                    </div>
+                </div>
+            );
+        };
+
+        const LandingScreen = ({ onEnter, onNavigate }) => (
+            <div className="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden animate-gradient-x bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900">
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] opacity-40 pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/20 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
+                
+                {/* Premium Wandering Orbs Animation */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    {Array.from({length: 30}).map((_, i) => (
+                        <div key={i} className="absolute rounded-full mix-blend-screen animate-wander"
+                            style={{
+                                width: `${Math.random() * 40 + 10}px`,
+                                height: `${Math.random() * 40 + 10}px`,
+                                left: `${Math.random() * 100}%`,
+                                top: `${Math.random() * 100}%`,
+                                background: `radial-gradient(circle, ${['#22d3ee', '#a855f7', '#34d399', '#facc15'][Math.floor(Math.random()*4)]} 0%, transparent 70%)`,
+                                animationDuration: `${Math.random() * 20 + 15}s`,
+                                animationDelay: `-${Math.random() * 20}s`
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <div className="z-10 flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 bg-slate-900/60 p-12 rounded-3xl backdrop-blur-sm border border-slate-700/50 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <h2 className="text-cyan-300 font-mono tracking-[0.5em] text-sm md:text-base uppercase mb-4 font-bold drop-shadow-md">Class 11 Physics Game</h2>
+                        <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-100 to-cyan-500 tracking-tighter drop-shadow-2xl mb-2 animate-float">POTENTIAL</h1>
+                        <div className="text-xl md:text-3xl text-slate-100 font-light tracking-[0.2em] uppercase border-y border-cyan-600 py-3 mx-8 shadow-[0_0_20px_rgba(6,182,212,0.3)] bg-slate-900/50">The Energy Vault</div>
+                    </div>
+                    <p className="text-lg md:text-xl text-cyan-200 italic font-serif mb-12 drop-shadow-[0_0_15px_rgba(6,182,212,0.8)] font-bold">"Store it. Shape it. Release it."</p>
+                    
+                    <div className="flex flex-col gap-4 w-full max-w-md px-4">
+                        <CyberButton onClick={onEnter} variant="primary" icon={Play} className="w-full h-16 shadow-[0_0_40px_rgba(6,182,212,0.6)] border-cyan-300">ENTER THE ENERGY VAULT</CyberButton>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                        <CyberButton onClick={() => onNavigate(GAME_STAGES.PROGRESS)} variant="success" icon={Award}>MY PROGRESS</CyberButton>
+                        <CyberButton onClick={() => onNavigate(GAME_STAGES.EQUATION_VAULT)} variant="purple" icon={BookOpen}>ARCHIVES</CyberButton>
+                        </div>
+                        <CyberButton onClick={() => onNavigate(GAME_STAGES.SETTINGS)} variant="pink" icon={Settings} className="mt-4">SETTINGS</CyberButton>
+                    </div>
+                </div>
+
+                <div className="absolute bottom-6 flex flex-col items-center text-slate-300 font-mono text-xs tracking-wide z-10 pointer-events-none drop-shadow-lg">
+                    <span>Created by <span className="text-white font-bold">Hrishikesh M (PGT Physics)</span></span>
+                    <span className="text-[10px] mt-1 opacity-90 uppercase tracking-widest text-cyan-200 font-bold">Advanced Physics Simulation</span>
+                </div>
+            </div>
+        );
+
+        const DashboardScreen = ({ title, content, onBack, rightAction }) => (
+            <div className="relative w-full h-screen bg-slate-900 flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden animate-gradient-x bg-gradient-to-br from-slate-900 to-slate-800">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(51,65,85,0.4)_0%,rgba(15,23,42,1)_100%)] pointer-events-none" />
+                <GlassPanel className="w-full max-w-6xl h-[90vh] flex flex-col z-10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] border-slate-600 bg-slate-800/95">
+                <div className="flex justify-between items-center p-4 md:p-6 border-b border-slate-600 bg-slate-900">
+                    <h2 className="text-xl md:text-2xl font-light text-white tracking-widest uppercase flex items-center gap-3 font-bold">
+                    <LayoutGrid className="text-cyan-400" /> {title}
+                    </h2>
+                    <div className="flex gap-4">
+                    {rightAction}
+                    <CyberButton variant="ghost" onClick={onBack} icon={RotateCcw}>MENU</CyberButton>
+                    </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-hide bg-slate-900/50">
+                    {content}
+                </div>
+                </GlassPanel>
+                <div className="absolute bottom-2 md:bottom-4 flex flex-col items-center text-slate-300 font-mono text-xs tracking-wide z-10 pointer-events-none drop-shadow-lg">
+                <span>Created by <span className="text-white font-bold">Hrishikesh M (PGT Physics)</span></span>
+                </div>
+            </div>
+        );
+
+        const SettingsScreen = ({ setGameState }) => {
+            const handleReset = () => {
+                if(window.confirm("WARNING: This will erase all your XP, Badges, unlocked Levels, and Player Profile. Are you sure you want to completely reset?")) {
+                localStorage.setItem('potential_energy_vault_v2', JSON.stringify(INITIAL_GAME_STATE));
+                setGameState(INITIAL_GAME_STATE);
+                }
+            };
+
+            return (
+                <DashboardScreen title="Settings & About" onBack={() => setGameState(prev => ({ ...prev, stage: GAME_STAGES.LANDING }))} content={
+                <div className="flex flex-col gap-8 w-full max-w-2xl mx-auto items-center text-center">
+                    <GlassPanel className="p-8 w-full border-cyan-400/50 bg-slate-800/90 shadow-2xl">
+                        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-cyan-300 tracking-tighter mb-2">POTENTIAL</h1>
+                        <div className="text-lg text-cyan-100 font-light tracking-[0.2em] uppercase border-b border-slate-600 pb-6 mb-6">The Energy Vault</div>
+                        
+                        <p className="text-slate-200 font-serif italic mb-6 text-lg">
+                        A classroom-oriented interactive physics game designed to help students explore potential energy through simulation, prediction, experimentation and problem solving.
+                        </p>
+                        
+                        <div className="bg-slate-900 p-4 rounded-lg border-2 border-slate-600 inline-block mb-8 shadow-inner">
+                        <span className="text-sm text-slate-300 uppercase tracking-widest block mb-1 font-bold">Created By</span>
+                        <span className="text-2xl text-white font-bold">Hrishikesh M</span>
+                        <span className="text-sm text-cyan-300 block mt-1 font-bold">(PGT Physics)</span>
+                        </div>
+                    </GlassPanel>
+
+                    <GlassPanel className="p-6 w-full border-red-500/50 flex flex-col items-center bg-red-950/30">
+                        <h3 className="text-red-400 font-mono uppercase tracking-widest mb-4 font-bold flex items-center gap-2"><Trash2 size={18}/> Danger Zone</h3>
+                        <p className="text-sm text-slate-300 mb-6 max-w-md font-bold">Resetting your progress will wipe your Registration data, lock all levels, clear your XP, and remove all discovered equations. This cannot be undone.</p>
+                        <CyberButton variant="danger" icon={RefreshCw} onClick={handleReset}>RESET ALL PROGRESS</CyberButton>
+                    </GlassPanel>
+                </div>
+                } />
+            );
+        };
+
+        const ProgressScreen = ({ gameState, setGameState }) => (
+        <DashboardScreen title="My Progress & Map" onBack={() => setGameState(prev => ({ ...prev, stage: GAME_STAGES.LANDING }))} content={
+            <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto">
+                {gameState.playerInfo.name && (
+                    <div className="bg-cyan-900/50 border-2 border-cyan-400/60 p-4 rounded-lg flex flex-col md:flex-row items-center justify-between text-cyan-50 font-mono text-sm shadow-[0_0_30px_rgba(6,182,212,0.3)] gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-cyan-800 rounded-full border border-cyan-400"><User size={20} className="text-cyan-100"/></div>
+                        <span className="text-lg font-bold tracking-wide uppercase">{gameState.playerInfo.name}</span>
+                        <span className="text-cyan-300 font-bold ml-2 text-xs">DIV: {gameState.playerInfo.division} | ROLL: {gameState.playerInfo.rollNo}</span>
+                    </div>
+                    <div className="flex items-center gap-4 bg-slate-900 px-4 py-2 rounded-lg border-2 border-slate-600 shadow-inner">
+                        <div className="flex items-center gap-2 text-amber-400">
+                            <Zap size={18}/>
+                            <span className="font-bold text-lg">LVL {Math.max(...gameState.unlockedLevels)} / 10</span>
+                        </div>
+                        <div className="w-px h-6 bg-slate-500"></div>
+                        <GlobalTimer gameState={gameState} />
+                    </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                <GlassPanel className="p-4 md:p-6 flex flex-col items-center justify-center text-center border-amber-400/50 bg-slate-800 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                    <Zap className="text-amber-400 mb-2" size={32} />
+                    <div className="text-3xl md:text-4xl font-mono text-white mb-1 font-bold">{gameState.playerXP}</div>
+                    <div className="text-[10px] text-amber-200 uppercase tracking-widest font-bold">Total Energy XP</div>
+                </GlassPanel>
+                <GlassPanel className="p-4 md:p-6 flex flex-col items-center justify-center text-center border-cyan-400/50 bg-slate-800 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+                    <Shield className="text-cyan-400 mb-2" size={32} />
+                    <div className="text-3xl md:text-4xl font-mono text-white mb-1 font-bold">{gameState.completedMissions.length} / {LEVELS.length}</div>
+                    <div className="text-[10px] text-cyan-200 uppercase tracking-widest font-bold">Missions Cleared</div>
+                </GlassPanel>
+                <GlassPanel className="p-4 md:p-6 flex flex-col items-center justify-center text-center border-purple-400/50 bg-slate-800 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                    <BookOpen className="text-purple-400 mb-2" size={32} />
+                    <div className="text-3xl md:text-4xl font-mono text-white mb-1 font-bold">{gameState.unlockedEquations.length}</div>
+                    <div className="text-[10px] text-purple-200 uppercase tracking-widest font-bold">Equations Found</div>
+                </GlassPanel>
+                <GlassPanel className="p-4 md:p-6 flex flex-col items-center justify-center text-center border-emerald-400/50 bg-slate-800 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                    <Trophy className="text-emerald-400 mb-2" size={32} />
+                    <div className="text-3xl md:text-4xl font-mono text-white mb-1 font-bold">{gameState.badges.length}</div>
+                    <div className="text-[10px] text-emerald-200 uppercase tracking-widest font-bold">Badges Earned</div>
+                </GlassPanel>
+                </div>
+
+                <div>
+                <h3 className="text-sm font-mono text-cyan-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 font-bold">Mission Map</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {LEVELS.map(lvl => {
+                    const isUnlocked = gameState.unlockedLevels.includes(lvl.id);
+                    const isCompleted = gameState.completedMissions.includes(lvl.id);
+                    return (
+                        <GlassPanel key={lvl.id} onClick={() => isUnlocked ? setGameState(prev => ({ ...prev, currentLevel: lvl.id, stage: GAME_STAGES.PLAYING })) : null} className={`p-5 flex flex-col transition-all duration-300 bg-slate-800 ${isUnlocked ? 'cursor-pointer hover:border-cyan-400 hover:bg-slate-700 hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] border-2' : 'opacity-60 grayscale pointer-events-none border border-slate-700'} ${isCompleted ? 'border-green-400/70 bg-green-900/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]' : (isUnlocked ? 'border-cyan-600' : '')}`}>
+                        <div className="flex items-center justify-between mb-3">
+                            <span className={`text-[11px] font-mono tracking-widest font-bold px-2 py-1 rounded ${isCompleted ? 'bg-green-700 text-green-100' : 'bg-cyan-700 text-cyan-100'}`}>
+                            {lvl.id === 10 ? 'FINAL BOSS' : `LEVEL ${(lvl.id).toString().padStart(2, '0')}`}
+                            </span>
+                            {isCompleted ? <CheckCircle2 size={20} className="text-green-400 drop-shadow-[0_0_8px_rgba(34,197,94,1)]" /> : (!isUnlocked && <Unlock size={18} className="text-slate-400"/>)}
+                        </div>
+                        <div className="text-lg text-white font-bold leading-tight tracking-wide">{lvl.title}</div>
+                        <div className="text-xs text-slate-300 mt-2 flex-1 italic font-bold">{lvl.objective}</div>
+                        {isUnlocked && !isCompleted && <div className="mt-4 pt-3 border-t border-slate-600 flex justify-end"><span className="text-xs font-bold text-cyan-300 flex items-center gap-1 hover:text-cyan-200 transition-colors">PLAY <ArrowRightCircle size={16}/></span></div>}
+                        {isCompleted && <div className="mt-4 pt-3 border-t border-green-700/50"><span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest flex items-center gap-1 bg-amber-900/40 w-fit px-2 py-1 rounded border border-amber-500/50"><Award size={14}/> {lvl.badge}</span></div>}
+                        </GlassPanel>
+                    )
+                    })}
+                </div>
+                </div>
+            </div>
+            }
+        />
+        );
+
+        const EquationVaultScreen = ({ gameState, setGameState }) => (
+        <DashboardScreen title="Equation Archives" onBack={() => setGameState(prev => ({ ...prev, stage: GAME_STAGES.LANDING }))} content={
+            <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto">
+                <p className="text-slate-200 font-serif italic mb-2 text-center md:text-left text-lg font-bold">Equations are theoretical representations of the physical behaviors you observe in the simulation.</p>
+                {['GRAVITATIONAL', 'ELASTIC', 'KINETIC', 'WORK & ENERGY', 'POTENTIAL-ENERGY GRAPHS'].map(category => {
+                const categoryEqs = EQUATIONS.filter(eq => eq.category === category);
+                if (categoryEqs.length === 0) return null;
+                return (
+                    <div key={category} className="mb-6">
+                    <h3 className="text-sm font-bold text-cyan-200 tracking-widest uppercase mb-4 border-b-2 border-slate-600 pb-2">{category}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {categoryEqs.map(eq => {
+                        const isUnlocked = gameState.unlockedEquations.includes(eq.id); 
+                        return (
+                            <GlassPanel key={eq.id} className={`p-6 relative overflow-hidden flex flex-col bg-slate-800 transition-all duration-300 ${isUnlocked ? 'border-l-4 border-l-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:-translate-y-1 hover:bg-slate-700' : 'opacity-50 border-l-4 border-slate-600'}`}>
+                                <h3 className="text-cyan-300 font-mono tracking-widest text-sm mb-2 uppercase font-bold">{isUnlocked ? eq.title : 'UNDISCOVERED'}</h3>
+                                <div className="text-2xl md:text-3xl font-serif text-white tracking-wider bg-slate-900 p-4 rounded-lg border-2 border-slate-600 shadow-inner text-center my-3 flex-1 flex items-center justify-center min-h-[100px] font-bold">
+                                    {isUnlocked ? eq.formula : '???'}
+                                </div>
+                                <div className="text-slate-300 text-sm font-serif italic mt-2 leading-relaxed">{isUnlocked ? eq.desc : 'Explore the Vault to unlock this concept.'}</div>
+                            </GlassPanel>
+                        )
+                        })}
+                    </div>
+                    </div>
+                )
+                })}
+            </div>
+            }
+        />
+        );
+
+        const MasteryReportScreen = ({ gameState, setGameState }) => (
+        <div className="relative w-full h-screen bg-slate-900 flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden animate-gradient-x bg-gradient-to-br from-indigo-900 via-purple-800 to-cyan-900">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vw] h-[200vw] md:w-[150vw] md:h-[150vw] bg-[conic-gradient(from_0deg,transparent_0_340deg,rgba(34,211,238,0.4)_360deg)] animate-[spin-slow_10s_linear_infinite] pointer-events-none opacity-80 mix-blend-screen" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vw] h-[150vw] md:w-[100vw] md:h-[100vw] bg-[conic-gradient(from_180deg,transparent_0_340deg,rgba(236,72,153,0.4)_360deg)] animate-[spin-slow_15s_linear_infinite_reverse] pointer-events-none opacity-80 mix-blend-screen" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(15,23,42,0.9)_100%)] pointer-events-none" />
+            
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {Array.from({length: 100}).map((_, i) => (
+                    <div key={i} className="absolute w-4 h-4 md:w-5 md:h-5 rounded-sm animate-[fall_3s_ease-in-out_infinite]" 
+                        style={{
+                            left: `${Math.random() * 100}%`, top: `-${Math.random() * 20}%`, 
+                            backgroundColor: ['#22d3ee', '#fcd34d', '#34d399', '#c084fc', '#f43f5e'][Math.floor(Math.random() * 5)],
+                            animationDelay: `${Math.random() * 3}s`, transform: `rotate(${Math.random() * 360}deg)`, boxShadow: '0 0 15px currentColor'
+                        }}
+                    />
+                ))}
+            </div>
+
+            <GlassPanel className="w-full max-w-4xl max-h-[90vh] flex flex-col z-10 overflow-hidden border-2 border-purple-400/80 shadow-[0_0_100px_rgba(168,85,247,0.6)] animate-in zoom-in-95 duration-1000 bg-slate-900/95 backdrop-blur-2xl">
+            <div className="flex flex-col items-center p-6 md:p-8 border-b-2 border-purple-600 bg-slate-800 text-center relative overflow-hidden shadow-lg">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-300 to-transparent animate-[glint_2s_ease-in-out_infinite]" />
+                <Award className="text-yellow-400 mb-4 drop-shadow-[0_0_30px_rgba(250,204,21,1)]" size={72} />
+                <h2 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-yellow-100 to-yellow-500 tracking-widest uppercase mb-2 drop-shadow-lg">Energy Vault Master</h2>
+                <div className="text-purple-200 font-serif italic text-lg md:text-2xl tracking-wide font-bold">All Physics Subsystems Stabilized by <span className="text-white bg-purple-900/50 px-3 py-1 rounded border border-purple-500">{gameState.playerInfo.name || 'Operative'}</span></div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-8 scrollbar-hide bg-slate-900">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="bg-slate-800 p-4 rounded-xl border-2 border-amber-500/70 shadow-[0_0_25px_rgba(245,158,11,0.3)]">
+                    <div className="text-3xl md:text-4xl font-mono text-amber-400 font-bold mb-1 drop-shadow-[0_0_10px_rgba(245,158,11,1)]">{gameState.playerXP}</div>
+                    <div className="text-[10px] md:text-xs text-amber-100 uppercase tracking-widest font-bold">Energy XP</div>
+                </div>
+                <div className="bg-slate-800 p-4 rounded-xl border-2 border-emerald-500/70 shadow-[0_0_25px_rgba(16,185,129,0.3)]">
+                    <div className="text-3xl md:text-4xl font-mono text-emerald-400 font-bold mb-1 drop-shadow-[0_0_10px_rgba(16,185,129,1)]">{gameState.completedMissions.length} / 10</div>
+                    <div className="text-[10px] md:text-xs text-emerald-100 uppercase tracking-widest font-bold">Levels Beaten</div>
+                </div>
+                <div className="bg-slate-800 p-4 rounded-xl border-2 border-purple-500/70 shadow-[0_0_25px_rgba(168,85,247,0.3)]">
+                    <div className="text-3xl md:text-4xl font-mono text-purple-400 font-bold mb-1 drop-shadow-[0_0_10px_rgba(168,85,247,1)]">{gameState.badges.length}</div>
+                    <div className="text-[10px] md:text-xs text-purple-100 uppercase tracking-widest font-bold">Badges</div>
+                </div>
+                <div className="bg-slate-800 p-4 rounded-xl border-2 border-cyan-500/70 shadow-[0_0_25px_rgba(6,182,212,0.3)] flex flex-col items-center justify-center">
+                    <div className="flex items-center gap-1 mb-1 text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,1)]">
+                        <Star size={24} fill="currentColor" /><Star size={28} fill="currentColor" className="-mt-2" /><Star size={24} fill="currentColor" />
+                    </div>
+                    <div className="text-2xl font-black text-cyan-300 font-mono tracking-widest drop-shadow-md">MASTER</div>
+                </div>
+                </div>
+
+                <div>
+                <h3 className="text-sm font-mono text-purple-200 tracking-widest uppercase border-b-2 border-purple-600 pb-2 mb-4 font-bold flex items-center gap-2">
+                    <CheckCircle2 size={18}/> Concepts Mastered
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {[
+                    'Gravitational Potential Energy', 'Elastic Potential Energy', 'Kinetic & Mechanical Energy', 
+                    'Energy Conservation', 'Work-Potential Relationship', 'Conservative Forces & Path Independence', 
+                    'Reference Level Independence', 'Potential-Energy Curves (F=-dV/dx)', 'Equilibrium & Turning Points'
+                    ].map((concept, idx) => (
+                    <div key={concept} className="bg-slate-800 px-4 py-3 rounded-lg text-sm text-slate-100 flex items-center gap-3 border border-slate-600 shadow-lg hover:bg-slate-700 transition-colors hover:border-purple-400" style={{animationDelay: `${idx * 0.1}s`}}>
+                        <CheckCircle2 size={20} className="text-emerald-400 shrink-0 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" /> <span className="font-bold tracking-wide">{concept}</span>
+                    </div>
+                    ))}
+                </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6">
+                <CyberButton variant="action" icon={LayoutGrid} onClick={() => setGameState(p => ({...p, stage: GAME_STAGES.PROGRESS}))}>VIEW MAP</CyberButton>
+                <CyberButton variant="pink" icon={RotateCcw} onClick={() => setGameState(p => ({...p, stage: GAME_STAGES.LANDING}))}>RETURN HOME</CyberButton>
+                </div>
+            </div>
+            </GlassPanel>
+            <div className="absolute bottom-4 flex flex-col items-center text-slate-200 font-mono text-xs md:text-sm tracking-wide z-10 pointer-events-none drop-shadow-xl font-bold">
+            <span>Created by <span className="text-white text-base">Hrishikesh M (PGT Physics)</span></span>
+            </div>
+        </div>
+        );
+
+        const TopHUD = ({ gameState, missionStage }) => {
+            const levelInfo = LEVELS.find(l => l.id === gameState.currentLevel) || LEVELS[0];
+
+            return (
+                <header className="absolute top-0 w-full p-4 flex flex-col md:flex-row justify-between items-start z-20 pointer-events-none gap-4">
+                <div className="flex flex-col gap-2 pointer-events-auto max-w-[60%]">
+                    <GlassPanel className="px-4 py-2 md:px-6 md:py-3 flex flex-col border-l-4 border-l-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)] bg-slate-900/95">
+                    <span className="text-[10px] text-cyan-300 font-mono tracking-widest uppercase font-bold drop-shadow-sm">
+                        {gameState.currentLevel === 10 ? "The Energy Core" : `Level ${(gameState.currentLevel).toString().padStart(2, '0')}`}
+                    </span>
+                    <span className="text-base md:text-lg text-white font-bold tracking-wide truncate drop-shadow-sm">{levelInfo.title}</span>
+                    <div className="mt-1 flex items-center gap-3">
+                        <span className="text-xs text-slate-200 font-serif italic hidden md:inline-block truncate max-w-[250px] font-bold">{levelInfo.objective}</span>
+                        <span className="px-2 py-0.5 bg-cyan-800 rounded text-[10px] font-mono font-bold text-cyan-100 border border-cyan-500 shadow-inner">{String(missionStage).replace(/_/g, ' ')}</span>
+                    </div>
+                    </GlassPanel>
+                </div>
+
+                <GlassPanel className="px-4 py-2 flex flex-col items-center justify-center border-b-2 border-slate-400 shadow-xl bg-slate-900/95 pointer-events-auto min-w-[200px]">
+                    <div className="flex items-center gap-2 mb-1">
+                        <User size={16} className="text-cyan-300 drop-shadow-md"/>
+                        <span className="text-xs font-bold text-white uppercase tracking-wider truncate max-w-[150px] drop-shadow-sm">{gameState.playerInfo.name || 'GUEST OPERATIVE'}</span>
+                    </div>
+                    <GlobalTimer gameState={gameState} />
+                </GlassPanel>
+
+                <div className="flex gap-4 pointer-events-auto">
+                    <GlassPanel className="px-4 py-2 md:px-6 md:py-3 flex items-center gap-3 border-r-4 border-r-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.4)] bg-slate-900/95">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-amber-300 font-mono tracking-widest uppercase font-bold hidden md:block">Energy XP</span>
+                        <span className="text-lg md:text-xl text-amber-400 font-mono font-bold drop-shadow-[0_0_8px_rgba(245,158,11,1)]">{gameState.playerXP.toString().padStart(4, '0')}</span>
+                    </div>
+                    <Zap className="text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,1)]" size={28} />
+                    </GlassPanel>
+                </div>
+                </header>
+            );
+        };
+
+        const EnergyHUD = ({ simState, showGraph, currentLevel, missionStage }) => {
+            let pe = 0, ke = 0, te = 0, epe = 0;
+            
+            if (currentLevel < 5) {
+                const h = (simState.referenceY - simState.orbY) / simState.pixelsPerMeter;
+                pe = simState.mass * simState.gravity * h;
+                ke = 0.5 * simState.mass * Math.pow(simState.velocity, 2);
+                te = pe + ke;
+            } else if (currentLevel === 5) {
+                epe = 0.5 * simState.springK * Math.pow(simState.springX, 2);
+                ke = 0.5 * simState.mass * Math.pow(simState.velocity, 2);
+                te = epe + ke;
+            } else if (currentLevel === 6) {
+                const h = (simState.referenceY - simState.orbY) / simState.pixelsPerMeter;
+                pe = simState.mass * simState.gravity * h;
+                const springTopY = 400;
+                const x = Math.max(0, (simState.orbY + 20 - springTopY)) / simState.pixelsPerMeter;
+                epe = 0.5 * simState.springK * Math.pow(x, 2);
+                ke = 0.5 * simState.mass * Math.pow(simState.velocity, 2);
+                te = pe + epe + ke;
+            } else if (currentLevel === 7) {
+                const h = (simState.referenceY - simState.orbY) / simState.pixelsPerMeter;
+                pe = simState.mass * simState.gravity * h;
+                ke = simState.l7Animating ? 0.5 * simState.mass * Math.pow(simState.velocity || 0, 2) : 0;
+                te = pe + ke;
+            } else if (currentLevel === 8) {
+                const y = 300 - 100*Math.cos((simState.l8X-500)/100) - 40*Math.cos((simState.l8X-500)/50);
+                pe = (500 - y) * 2;
+                ke = simState.l8TotalE - pe;
+                if (ke < 0) ke = 0; 
+                te = pe + ke;
+            } else if (currentLevel === 9) {
+                const startH = simState.l9Height;
+                const fallDist = (simState.orbY - 100) / simState.pixelsPerMeter;
+                pe = simState.l9Mass * simState.gravity * Math.max(0, startH - fallDist);
+                if (simState.l9State === 'FALLING') {
+                ke = simState.l9Mass * simState.gravity * fallDist; 
+                } else if (simState.l9State === 'COMPRESSING' || simState.l9State === 'TRAPPED') {
+                epe = 0.5 * simState.l9SpringK * Math.pow(simState.springX, 2);
+                ke = Math.max(0, (simState.l9Mass * simState.gravity * startH) - epe);
+                if (simState.velocity === 0) ke = 0;
+                }
+                te = pe + ke + epe;
+            } else if (currentLevel === 10) {
+                pe = simState.mass * simState.gravity * ((450 - simState.orbY)/simState.pixelsPerMeter);
+                ke = 0.5 * simState.mass * Math.pow(simState.velocity, 2);
+                te = pe + ke;
+            }
+
+            const maxVisEnergy = (currentLevel >= 5 && currentLevel !== 7 && currentLevel !== 8 && currentLevel !== 9 && currentLevel !== 10) ? 200 : (currentLevel === 8 ? 600 : 500); 
+            const pePercent = Math.max(-100, Math.min(100, (pe / maxVisEnergy) * 100));
+            const epePercent = Math.max(0, Math.min(100, (epe / maxVisEnergy) * 100));
+            const kePercent = Math.max(0, Math.min(100, (ke / maxVisEnergy) * 100));
+            const tePercent = Math.max(-100, Math.min(100, (te / maxVisEnergy) * 100));
+
+            return (
+                <div className="absolute right-4 md:right-6 top-24 bottom-24 w-64 md:w-80 flex flex-col gap-4 z-20 pointer-events-none">
+                <GlassPanel className="p-4 md:p-6 flex flex-col gap-4 md:gap-5 pointer-events-auto bg-slate-900/95 shadow-2xl border border-slate-600">
+                    <div className="flex items-center gap-2 border-b-2 border-slate-600 pb-2 mb-1">
+                    <Activity className="text-cyan-300" size={18} />
+                    <h3 className="text-xs md:text-sm font-mono text-white tracking-widest uppercase font-bold">Telemetry</h3>
+                    </div>
+                    
+                    {(currentLevel < 5 || currentLevel > 5) && (
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between items-baseline">
+                        <span className="text-[9px] md:text-[10px] font-bold text-cyan-300 uppercase tracking-widest">{currentLevel === 8 ? 'Potential (V)' : 'Gravitational (U_g)'}</span>
+                        <span className={`text-xs md:text-sm font-mono font-bold ${pe < 0 ? 'text-red-400' : 'text-cyan-100'}`}>{pe.toFixed(1)} J</span>
+                        </div>
+                        <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-500 relative shadow-inner">
+                        <div className={`absolute top-0 bottom-0 ${pe < 0 ? 'bg-red-500 right-1/2' : 'bg-cyan-400 left-1/2'} transition-all duration-75 ease-linear shadow-[0_0_15px_rgba(34,211,238,1)]`} style={{ width: `${Math.abs(pePercent)/2}%` }} />
+                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-400 z-10" />
+                        </div>
+                    </div>
+                    )}
+
+                    {(currentLevel === 5 || currentLevel === 6 || currentLevel === 9) && (
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between items-baseline">
+                        <span className="text-[9px] md:text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Elastic (U_s)</span>
+                        <span className="text-xs md:text-sm font-mono font-bold text-emerald-100">{epe.toFixed(1)} J</span>
+                        </div>
+                        <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-500 relative shadow-inner">
+                        <div className="absolute top-0 bottom-0 left-0 bg-emerald-400 transition-all duration-75 ease-linear shadow-[0_0_15px_rgba(52,211,153,1)]" style={{ width: `${epePercent}%` }} />
+                        </div>
+                    </div>
+                    )}
+
+                    <div className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-baseline">
+                        <span className="text-[9px] md:text-[10px] font-bold text-amber-300 uppercase tracking-widest">Kinetic (K)</span>
+                        <span className="text-xs md:text-sm font-mono font-bold text-amber-100">{ke.toFixed(1)} J</span>
+                    </div>
+                    <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-500 relative shadow-inner">
+                        <div className={`absolute top-0 bottom-0 left-0 bg-amber-400 transition-all duration-75 ease-linear shadow-[0_0_15px_rgba(251,191,36,1)]`} style={{ width: `${currentLevel < 5 || currentLevel >= 6 ? kePercent/2 : kePercent}%`, marginLeft: currentLevel < 5 || currentLevel >= 6 ? '50%' : '0' }} />
+                        {(currentLevel < 5 || currentLevel >= 6) && <div className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-400 z-10" />}
+                    </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 pt-2 md:pt-3 border-t-2 border-slate-600">
+                    <div className="flex justify-between items-baseline">
+                        <span className="text-[9px] md:text-[10px] font-bold text-purple-300 uppercase tracking-widest">Total Mech (E)</span>
+                        <span className={`text-xs md:text-sm font-mono font-bold ${te < 0 ? 'text-red-400' : 'text-purple-100'}`}>{te.toFixed(1)} J</span>
+                    </div>
+                    <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden relative border border-slate-500 shadow-inner">
+                        <div className={`absolute top-0 bottom-0 ${te < 0 ? 'bg-red-500 right-1/2' : 'bg-purple-400 left-0'} transition-all duration-75 ease-linear shadow-[0_0_15px_rgba(192,132,252,1)]`} style={{ width: `${currentLevel < 5 || currentLevel >= 6 ? Math.abs(tePercent)/2 : Math.abs(tePercent)}%`, marginLeft: (currentLevel < 5 || currentLevel >= 6) && te >= 0 ? '50%' : '0' }} />
+                        {(currentLevel < 5 || currentLevel >= 6) && <div className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-400 z-10" />}
+                    </div>
+                    </div>
+                </GlassPanel>
+                </div>
+            );
+        };
+
+        const SimulationScene = ({ simState, setSimState, currentLevel, missionStage, setToastMessage }) => {
+            const svgRef = useRef(null);
+            
+            const getL7Point = useCallback((path, t) => {
+                const pA = { x: 200, y: 150 };
+                const pB = { x: 800, y: 450 };
+                if (path === 'A') return { x: pA.x + (pB.x - pA.x)*t, y: pA.y + (pB.y - pA.y)*t };
+                else if (path === 'B') {
+                    if (t < 0.333) return { x: 200 + 300*(t/0.333), y: 150 };
+                    else if (t < 0.666) return { x: 500, y: 150 + 300*((t-0.333)/0.333) };
+                    else return { x: 500 + 300*((t-0.666)/0.334), y: 450 };
+                }
+                else if (path === 'C') {
+                    if (t < 0.6) return { x: 200 + 300*(t/0.6), y: 150 + 350*(t/0.6) };
+                    else return { x: 500 + 300*((t-0.6)/0.4), y: 500 - 50*((t-0.6)/0.4) };
+                }
+                else if (path === 'LOOP') {
+                    if (t < 0.4) return { x: pA.x + (pB.x - pA.x)*(t/0.4), y: pA.y + (pB.y - pA.y)*(t/0.4) };
+                    else if (t < 0.7) return { x: pB.x + (500 - pB.x)*((t-0.4)/0.3), y: pB.y + (500 - pB.y)*((t-0.4)/0.3) };
+                    else {
+                        const localT = (t-0.7)/0.3;
+                        return { x: 500 + (pA.x - 500)*localT, y: 500 + (pA.y - 500)*localT };
+                    }
+                }
+                return pA;
+            }, []);
+
+            useEffect(() => {
+                let animationFrameId;
+                const updatePhysics = (timestamp) => {
+                setSimState(prev => {
+                    if ((!prev.isFalling && !prev.l7Animating && prev.l9State === 'IDLE' && prev.l8Mode === 'ANALYZE' && prev.l10Stage < 99 && currentLevel !== 5) || prev.isPaused) {
+                    return { ...prev, lastTimestamp: timestamp };
+                    }
+                    
+                    let rawDt = (timestamp - prev.lastTimestamp) / 1000 || 0.016;
+                    const dt = Math.min(rawDt, 0.033);
+                    const subSteps = 10;
+                    const safeDt = dt / subSteps;
+
+                    if (currentLevel === 10 && prev.isFalling) {
+                    let v = prev.velocity;
+                    let y = prev.orbY;
+                    for(let i=0; i<subSteps; i++) {
+                        v += prev.gravity * safeDt;
+                        y += v * safeDt * prev.pixelsPerMeter;
+                        if (y >= 450) { y = 450; v = 0; }
+                    }
+                    const hasHit = y >= 450;
+                    return { ...prev, orbY: y, velocity: v, isFalling: !hasHit, lastTimestamp: timestamp };
+                    }
+
+                    if (currentLevel === 9 && prev.l9State !== 'IDLE') {
+                    let state = prev.l9State;
+                    let v = prev.velocity;
+                    let y = prev.orbY;
+                    let x = prev.springX;
+                    let maxComp = prev.l9MaxCompression;
+
+                    for(let i=0; i<subSteps; i++) {
+                        if (state === 'FALLING') {
+                            v += prev.gravity * safeDt;
+                            y += v * safeDt * prev.pixelsPerMeter;
+                            if (y >= 460) { y = 460; state = 'COMPRESSING'; }
+                        } else if (state === 'COMPRESSING') {
+                            const F_spring = -prev.l9SpringK * x;
+                            const F_gravity = prev.l9Mass * prev.gravity;
+                            const a = (F_spring + F_gravity) / prev.l9Mass;
+                            v += a * safeDt;
+                            x += v * safeDt; 
+                            y = 460 + (x * prev.pixelsPerMeter);
+                            if (x > maxComp) maxComp = x;
+                            if (v < 0 && x > 0) { state = 'TRAPPED'; v = 0; }
+                        }
+                    }
+                    return { ...prev, orbY: y, velocity: v, springX: x, l9State: state, l9MaxCompression: maxComp, lastTimestamp: timestamp };
+                    }
+
+                    if (currentLevel === 8 && prev.l8Mode === 'SIMULATE') {
+                    let x = prev.l8X;
+                    let v = prev.l8V;
+                    for(let i=0; i<subSteps; i++) {
+                        const y = 300 - 100*Math.cos((x-500)/100) - 40*Math.cos((x-500)/50);
+                        const pe = (500 - y) * 2;
+                        if (pe >= prev.l8TotalE && Math.abs(v) > 0) {
+                            v = -v * 0.8; 
+                            x += v * safeDt * 40; 
+                        } else {
+                            const dVdx = Math.sin((x-500)/100) + 0.8 * Math.sin((x-500)/50);
+                            const F = -dVdx * 200; 
+                            const a = F / prev.mass;
+                            v += a * safeDt;
+                            x += v * safeDt * 40;
+                        }
+                        if (x < 50) { x = 50; v = Math.abs(v); }
+                        if (x > 950) { x = 950; v = -Math.abs(v); }
+                    }
+                    return { ...prev, l8X: x, l8V: v, lastTimestamp: timestamp };
+                    }
+
+                    if (currentLevel === 7 && prev.l7Animating) {
+                        let nextProgress = prev.l7Progress + (dt / 3.0);
+                        if (nextProgress >= 1) {
+                            nextProgress = 1;
+                            const pt = getL7Point(prev.l7Path, nextProgress);
+                            return { ...prev, l7Progress: 1, orbX: pt.x, orbY: pt.y, velocity: 0, l7Animating: false, lastTimestamp: timestamp };
+                        }
+                        const pt = getL7Point(prev.l7Path, nextProgress);
+                        const h = (prev.referenceY - pt.y) / prev.pixelsPerMeter;
+                        const pe = prev.mass * prev.gravity * h;
+                        const initialH = (prev.referenceY - 150) / prev.pixelsPerMeter;
+                        const initialPe = prev.mass * prev.gravity * initialH;
+                        const ke = Math.max(0.1, initialPe - pe + 5); 
+                        const v = Math.sqrt((2 * ke) / prev.mass);
+                        return { ...prev, l7Progress: nextProgress, orbX: pt.x, orbY: pt.y, velocity: v, l7Animating: true, lastTimestamp: timestamp };
+                    }
+
+                    if (currentLevel === 6) {
+                    let v = prev.velocity;
+                    let y = prev.orbY;
+                    let x = 0;
+                    const springTopY = 400; 
+                    for(let i=0; i<subSteps; i++) {
+                        x = Math.max(0, (y + 20 - springTopY)) / prev.pixelsPerMeter;
+                        let a = prev.gravity; 
+                        if (x > 0) {
+                            a -= (prev.springK * x) / prev.mass; 
+                            // Damped oscillation so it eventually settles and stops flickering
+                            v *= 0.985; 
+                        }
+                        if (prev.frictionEnabled) a -= 0.5 * v; 
+                        v += a * safeDt;
+                        y += v * safeDt * prev.pixelsPerMeter;
+                        if (y + 20 > 500) { y = 480; v = -v * 0.8; }
+                    }
+                    // Latch the completion state once it dips deep enough once
+                    let l6Comp = prev.l6Completed || (x > 0.4); 
+                    return { ...prev, orbY: y, velocity: v, springX: x, l6Completed: l6Comp, lastTimestamp: timestamp };
+                    }
+
+                    if (currentLevel === 5) {
+                    let x = prev.springX;
+                    let v = prev.velocity;
+                    let orbX = prev.orbX;
+                    let detached = prev.isDetached;
+                    
+                    if (!prev.isDragging && !detached) {
+                        for(let i=0; i<subSteps; i++) {
+                            let a = (-prev.springK * x) / prev.mass;
+                            v += a * safeDt;
+                            x += v * safeDt;
+                            // Natural damping for spring oscillation
+                            v *= 0.995; 
+                        }
+                        if (missionStage && missionStage.includes('LAUNCH') && x >= 0) { 
+                            detached = true; x = 0; 
+                        }
+                        orbX = 400 + (x * prev.springPPM);
+                    } else if (detached) {
+                        for(let i=0; i<subSteps; i++) {
+                            orbX += v * safeDt * prev.springPPM;
+                            x = 0; 
+                        }
+                    }
+                    return { ...prev, springX: x, orbX, velocity: v, isDetached: detached, lastTimestamp: timestamp };
+                    }
+
+                    let fallState = prev.initialFallState;
+                    if (!fallState) fallState = { y: prev.orbY, t0: timestamp };
+                    const fallDt = (timestamp - fallState.t0) / 1000;
+                    const dy = 0.5 * prev.gravity * Math.pow(fallDt, 2) * prev.pixelsPerMeter;
+                    const v = prev.gravity * fallDt;
+                    let newY = fallState.y + dy;
+                    const groundY = prev.referenceY;
+                    let hasHit = false;
+                    if (newY >= groundY - 20) { newY = groundY - 20; hasHit = true; }
+                    
+                    return { ...prev, orbY: newY, velocity: hasHit ? 0 : v, isFalling: !hasHit, initialFallState: hasHit ? null : fallState, lastTimestamp: timestamp, hasLanded: hasHit ? true : prev.hasLanded };
+                });
+                animationFrameId = requestAnimationFrame(updatePhysics);
+                };
+                animationFrameId = requestAnimationFrame(updatePhysics);
+                return () => cancelAnimationFrame(animationFrameId);
+            }, [setSimState, currentLevel, missionStage, getL7Point]);
+
+            const getSVGPoint = (evt) => {
+                if(!svgRef.current) return {x: 0, y: 0};
+                const pt = svgRef.current.createSVGPoint();
+                pt.x = evt.clientX; pt.y = evt.clientY;
+                return pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
+            };
+
+            const handlePointerDown = (e) => {
+                if (simState.isFalling || simState.l7Animating || simState.l9State !== 'IDLE') return;
+                const type = e.target.dataset.type;
+                if (type === 'orb') {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setSimState(prev => ({ ...prev, isDragging: true, velocity: 0, isDetached: false }));
+                } else if (type === 'reference' || type === 'energy-line') {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setSimState(prev => ({ ...prev, isDraggingRef: true }));
+                }
+            };
+
+            const handlePointerMove = (e) => {
+                if ((!simState.isDragging && !simState.isDraggingRef) || simState.isFalling || simState.l7Animating || simState.l9State !== 'IDLE') return;
+                const svgPoint = getSVGPoint(e);
+                setSimState(prev => {
+                if (prev.isDragging) {
+                    if (currentLevel < 5) return { ...prev, orbY: Math.max(50, Math.min(prev.referenceY - 20, svgPoint.y)) };
+                    if (currentLevel === 5) {
+                    const newSpringX = Math.max(-1.5, Math.min(1.5, (svgPoint.x - 400) / prev.springPPM));
+                    return { ...prev, springX: newSpringX, orbX: 400 + (newSpringX * prev.springPPM) };
+                    }
+                    if (currentLevel === 6) return { ...prev, orbY: Math.max(50, Math.min(380, svgPoint.y)) };
+                    if (currentLevel === 8 && prev.l8Mode === 'ANALYZE') return { ...prev, l8X: Math.max(50, Math.min(950, svgPoint.x)), l8V: 0 };
+                    if (currentLevel === 10 && prev.l10Stage === 1) return { ...prev, orbY: Math.max(50, Math.min(450, svgPoint.y)) };
+                }
+                if (prev.isDraggingRef) {
+                    if (currentLevel === 8) {
+                    const newTotalE = Math.max(50, Math.min(600, (500 - svgPoint.y) * 2));
+                    return { ...prev, l8TotalE: newTotalE };
+                    }
+                    return { ...prev, referenceY: Math.max(100, Math.min(580, svgPoint.y)) };
+                }
+                return prev;
+                });
+            };
+
+            const handlePointerUp = (e) => {
+                if (simState.isDragging || simState.isDraggingRef) {
+                try { e.currentTarget.releasePointerCapture(e.pointerId); } catch(e){}
+                setSimState(prev => ({ ...prev, isDragging: false, isDraggingRef: false }));
+                }
+            };
+
+            return (
+                <div className="absolute inset-0 bg-slate-900 flex items-center justify-center overflow-hidden z-0 pointer-events-auto">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(51,65,85,0.7)_0%,rgba(15,23,42,1)_100%)] pointer-events-none" />
+                <svg ref={svgRef} viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" className="w-full h-full max-w-[1400px] max-h-[800px]" style={{touchAction: 'none'}} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp}>
+                    <defs>
+                    <linearGradient id="orbGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#cffafe" /><stop offset="40%" stopColor="#22d3ee" /><stop offset="100%" stopColor="#0284c7" /></linearGradient>
+                    <filter id="glow"><feGaussianBlur stdDeviation="8" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    <filter id="glow-strong"><feGaussianBlur stdDeviation="12" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    </defs>
+
+                    {/* Brighter Grid */}
+                    <g opacity="0.6" pointerEvents="none">
+                    {Array.from({ length: 21 }).map((_, i) => <line key={`v-${i}`} x1={i * 50} y1="0" x2={i * 50} y2="600" stroke="#475569" strokeWidth="2" />)}
+                    {Array.from({ length: 13 }).map((_, i) => <line key={`h-${i}`} x1="0" y1={i * 50} x2="1000" y2={i * 50} stroke="#475569" strokeWidth="2" />)}
+                    </g>
+
+                    {currentLevel < 4 && <rect x="0" y={simState.referenceY} width="1000" height="100" fill="#1e293b" stroke="#38bdf8" strokeWidth="6" pointerEvents="none" opacity="0.95" filter="url(#glow)" />}
+                    
+                    {currentLevel !== 8 && currentLevel !== 9 && currentLevel !== 10 && (
+                    <g className={`reference-level`}>
+                        {/* Solid backing line for visibility and thick invisible rect for easy dragging */}
+                        <line x1="0" y1={simState.referenceY} x2="1000" y2={simState.referenceY} stroke="#0284c7" strokeWidth="8" opacity="0.7" pointerEvents="none" />
+                        <line x1="0" y1={simState.referenceY} x2="1000" y2={simState.referenceY} stroke="#67e8f9" strokeWidth="6" strokeDasharray="15, 10" filter="url(#glow-strong)" pointerEvents="none" />
+                        <rect data-type="reference" x="0" y={simState.referenceY - 30} width="1000" height="60" fill="transparent" pointerEvents="all" className={currentLevel === 4 || currentLevel >= 6 ? 'cursor-ns-resize touch-manipulation' : ''} />
+                        <rect x="80" y={simState.referenceY + 12} width="160" height="26" rx="6" fill="#0284c7" opacity="0.95" stroke="#7dd3fc" strokeWidth="2" pointerEvents="none" />
+                        <text x="160" y={simState.referenceY + 29} fill="#ffffff" fontSize="13" fontFamily="monospace" fontWeight="bold" textAnchor="middle" pointerEvents="none">REFERENCE LEVEL</text>
+                    </g>
+                    )}
+
+                    {currentLevel === 5 && (
+                    <g>
+                        <rect x="0" y="420" width="1000" height="180" fill="#1e293b" stroke="#38bdf8" strokeWidth="6" filter="url(#glow)" pointerEvents="none" />
+                        <rect x="20" y="300" width="30" height="120" fill="#334155" rx="4" pointerEvents="none" stroke="#94a3b8" strokeWidth="4" />
+                        <line x1="400" y1="300" x2="400" y2="420" stroke="#38bdf8" strokeWidth="4" strokeDasharray="8,8" opacity="0.9" pointerEvents="none"/>
+                        {/* Brighter Spring */}
+                        <path d={`M 50 400 L 60 400 ${Array.from({length:14}).map((_,i)=>` L ${50+(simState.orbX-70)/14*(i+0.5)} ${i%2===0?350:450}`).join('')} L ${simState.orbX-30} 400 L ${simState.orbX-20} 400`} fill="none" stroke="#f1f5f9" strokeWidth="10" strokeLinejoin="round" pointerEvents="none" filter="url(#glow)"/>
+                        {!simState.isDetached && <rect x={simState.orbX - 25} y="375" width="50" height="50" fill="transparent" stroke="#22d3ee" strokeWidth="3" strokeDasharray="4 2" rx="4" pointerEvents="none"/>}
+                    </g>
+                    )}
+
+                    {currentLevel === 6 && (
+                    <g pointerEvents="none">
+                        <rect x="420" y="500" width="160" height="100" fill="#1e293b" stroke="#38bdf8" strokeWidth="6" filter="url(#glow)" />
+                        <line x1="450" y1="400" x2="550" y2="400" stroke="#38bdf8" strokeWidth="4" strokeDasharray="8,8" opacity="0.9"/>
+                        {/* Brighter Vertical Spring */}
+                        <path d={`M 500 500 L 500 490 ${Array.from({length:10}).map((_,i)=>` L ${i%2===0?460:540} ${500 - (500 - Math.max(simState.orbY+20, 400))/10*(i+0.5)}`).join('')} L 500 ${Math.max(simState.orbY+20, 400)+10} L 500 ${Math.max(simState.orbY+20, 400)}`} fill="none" stroke="#f1f5f9" strokeWidth="10" strokeLinejoin="round" filter="url(#glow)" />
+                        <rect x="350" y="100" width="100" height="16" fill="#334155" stroke="#94a3b8" strokeWidth="4"/>
+                        <rect x="700" y="150" width="100" height="16" fill="#10b981" filter="url(#glow-strong)" stroke="#34d399" strokeWidth="3"/>
+                    </g>
+                    )}
+
+                    {currentLevel === 7 && (
+                        <g pointerEvents="none">
+                            {/* Brighter inactive paths */}
+                            <path d="M 200 150 L 800 450" fill="none" stroke={simState.l7Path === 'A' ? "#22d3ee" : "#64748b"} strokeWidth={simState.l7Path === 'A' ? 12 : 8} strokeDasharray={simState.l7Path === 'A' ? "0" : "15,10"} opacity={simState.l7Path === 'A' ? 1 : 0.8} filter={simState.l7Path === 'A' ? "url(#glow)" : ""}/>
+                            <path d="M 200 150 L 500 150 L 500 450 L 800 450" fill="none" stroke={simState.l7Path === 'B' ? "#fbbf24" : "#64748b"} strokeWidth={simState.l7Path === 'B' ? 12 : 8} strokeDasharray={simState.l7Path === 'B' ? "0" : "15,10"} opacity={simState.l7Path === 'B' ? 1 : 0.8} strokeLinejoin="round" filter={simState.l7Path === 'B' ? "url(#glow)" : ""}/>
+                            <path d="M 200 150 L 500 500 L 800 450" fill="none" stroke={simState.l7Path === 'C' ? "#34d399" : "#64748b"} strokeWidth={simState.l7Path === 'C' ? 12 : 8} strokeDasharray={simState.l7Path === 'C' ? "0" : "15,10"} opacity={simState.l7Path === 'C' ? 1 : 0.8} strokeLinejoin="round" filter={simState.l7Path === 'C' ? "url(#glow)" : ""}/>
+                            <path d="M 200 150 L 800 450 L 500 500 Z" fill="none" stroke={simState.l7Path === 'LOOP' ? "#c084fc" : "transparent"} strokeWidth={simState.l7Path === 'LOOP' ? 12 : 0} opacity={simState.l7Path === 'LOOP' ? 1 : 0} strokeLinejoin="round" filter={simState.l7Path === 'LOOP' ? "url(#glow)" : ""}/>
+                            <rect x="150" y="150" width="100" height="18" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="4" />
+                            <rect x="750" y="450" width="100" height="18" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="4" />
+                        </g>
+                    )}
+
+                    {currentLevel === 8 && (
+                        <g>
+                            <rect x="0" y="0" width="1000" height="600" fill="transparent" />
+                            <line x1="50" y1="500" x2="950" y2="500" stroke="#94a3b8" strokeWidth="5" pointerEvents="none" />
+                            <line x1="50" y1="100" x2="50" y2="500" stroke="#94a3b8" strokeWidth="5" pointerEvents="none" />
+                            {/* Brighter Graph Curve */}
+                            <path d={`M 50 ${300 - 100*Math.cos((50-500)/100) - 40*Math.cos((50-500)/50)} ` + Array.from({length: 90}).map((_, i) => `L ${60 + i*10} ${300 - 100*Math.cos(((60 + i*10)-500)/100) - 40*Math.cos(((60 + i*10)-500)/50)}`).join(' ')} fill="none" stroke="#67e8f9" strokeWidth="8" filter="url(#glow-strong)" pointerEvents="none"/>
+                            
+                            <g>
+                                {/* Brighter Total Energy Line & Interactive Hitbox */}
+                                <line x1="50" y1={500 - simState.l8TotalE/2} x2="950" y2={500 - simState.l8TotalE/2} stroke="#c084fc" strokeWidth="8" opacity="0.6" pointerEvents="none" />
+                                <line x1="50" y1={500 - simState.l8TotalE/2} x2="950" y2={500 - simState.l8TotalE/2} stroke="#e879f9" strokeWidth="6" strokeDasharray="15,10" filter="url(#glow-strong)" pointerEvents="none" />
+                                <rect data-type="energy-line" x="50" y={500 - simState.l8TotalE/2 - 30} width="900" height="60" fill="transparent" pointerEvents="all" className="cursor-ns-resize touch-manipulation" />
+                                <rect x="850" y={500 - simState.l8TotalE/2 - 16} width="100" height="28" rx="6" fill="#7e22ce" opacity="0.95" pointerEvents="none" stroke="#f0abfc" strokeWidth="2" />
+                                <text x="900" y={500 - simState.l8TotalE/2 + 4} fill="#ffffff" fontSize="13" fontFamily="monospace" fontWeight="bold" textAnchor="middle" pointerEvents="none">E = {simState.l8TotalE}J</text>
+                            </g>
+                            
+                            {(() => {
+                                const x = simState.l8X;
+                                const y = 300 - 100*Math.cos((x-500)/100) - 40*Math.cos((x-500)/50);
+                                const dVdx = Math.sin((x-500)/100) + 0.8 * Math.sin((x-500)/50);
+                                const F = -dVdx;
+                                const K = simState.l8TotalE/2 - (500 - y);
+                                const isAllowed = K >= 0;
+
+                                return (
+                                    <g>
+                                        {simState.l8Mode === 'ANALYZE' && <line x1={x} y1="100" x2={x} y2="500" stroke="#f8fafc" strokeWidth="4" strokeDasharray="8,6" opacity="0.7" pointerEvents="none" />}
+                                        {!isAllowed && simState.l8Mode === 'ANALYZE' && <rect x={x-45} y="150" width="90" height="28" fill="#991b1b" opacity="0.95" rx="4" pointerEvents="none" stroke="#fca5a5" strokeWidth="2" />}
+                                        {isAllowed && <line x1={x} y1={y} x2={x} y2={500 - simState.l8TotalE/2} stroke="#fde047" strokeWidth="6" filter="url(#glow-strong)" pointerEvents="none" />}
+                                        {simState.l8Mode === 'ANALYZE' && isAllowed && Math.abs(F) > 0.05 && (
+                                            <g transform={`translate(${x}, ${y - 40})`} pointerEvents="none">
+                                                <line x1="0" y1="0" x2={F * 80} y2="0" stroke="#ef4444" strokeWidth="6" filter="url(#glow-strong)" />
+                                                <polygon points={`${F * 80},0 ${F * 80 - Math.sign(F)*15},-8 ${F * 80 - Math.sign(F)*15},8`} fill="#ef4444" />
+                                            </g>
+                                        )}
+                                        {/* Unified Brighter Orb for Graph */}
+                                        <circle data-type={simState.l8Mode === 'ANALYZE' ? "orb" : ""} cx={x} cy={y} r="28" fill={isAllowed ? "url(#orbGrad)" : "#475569"} filter={isAllowed ? "url(#glow-strong)" : ""} stroke={isAllowed ? "#ffffff" : "#94a3b8"} strokeWidth="4" className={simState.l8Mode === 'ANALYZE' ? 'cursor-grab touch-manipulation' : ''} />
+                                    </g>
+                                );
+                            })()}
+                        </g>
+                    )}
+
+                    {currentLevel === 9 && (
+                        <g pointerEvents="none">
+                            <rect x="0" y="500" width="1000" height="100" fill="#1e293b" stroke="#38bdf8" strokeWidth="6" filter="url(#glow)"/>
+                            <rect x="490" y="470" width="10" height="30" fill="#64748b" stroke="#cbd5e1" strokeWidth="3" />
+                            <rect x="490" y="470" width="10" height={0.25 * simState.pixelsPerMeter} fill="#dc2626" opacity="0.9" />
+                            <rect x="490" y="470" width="10" height={0.20 * simState.pixelsPerMeter} fill="#10b981" opacity="0.9" />
+                            <text x="515" y="480" fill="#f8fafc" fontSize="14" fontWeight="bold">SAFE (0.20m)</text>
+                            <text x="515" y="495" fill="#fca5a5" fontSize="14" fontWeight="bold">MAX CAP (0.25m)</text>
+                            {/* Brighter L9 Spring */}
+                            <path d={`M 500 500 L 500 490 ${Array.from({length:10}).map((_,i)=>` L ${i%2===0?460:540} ${500 - (500 - (460 + simState.springX * simState.pixelsPerMeter))/10*(i+0.5)}`).join('')} L 500 ${460 + simState.springX * simState.pixelsPerMeter}`} fill="none" stroke="#f1f5f9" strokeWidth="10" strokeLinejoin="round" filter="url(#glow)" />
+                            <rect x="470" y={460 + simState.springX * simState.pixelsPerMeter - 5} width="60" height="16" fill="#0ea5e9" rx="4" stroke="#bae6fd" strokeWidth="3" />
+                            
+                            <g transform={`translate(500, ${simState.orbY})`}>
+                            <circle r="30" fill="url(#orbGrad)" stroke="#ffffff" strokeWidth="4" filter="url(#glow-strong)"/>
+                            <text x="0" y="6" fill="#083344" fontSize="14" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">{simState.l9Mass}kg</text>
+                            </g>
+
+                            {simState.l9State === 'IDLE' && (
+                            <g opacity="0.95">
+                                <line x1="540" y1={simState.orbY} x2="630" y2={simState.orbY} stroke="#67e8f9" strokeWidth="4" strokeDasharray="10,8" filter="url(#glow-strong)" />
+                                <text x="640" y={simState.orbY + 5} fill="#ffffff" fontSize="16" fontFamily="monospace" fontWeight="bold">Start Height: {simState.l9Height.toFixed(2)}m</text>
+                            </g>
+                            )}
+                        </g>
+                    )}
+
+                    {currentLevel === 10 && (
+                        <g>
+                            <rect x="0" y="450" width="1000" height="150" fill="#1e293b" stroke="#38bdf8" strokeWidth="6" pointerEvents="none" filter="url(#glow)"/>
+                            
+                            {/* Brighter Core - Moved Safely to X=650 to prevent right HUD overlap */}
+                            <circle cx="650" cy="350" r="70" fill="transparent" stroke={simState.coreStability >= 100 ? "#34d399" : "#38bdf8"} strokeWidth="10" strokeDasharray="20 15" className="animate-[spin_10s_linear_infinite]" pointerEvents="none" filter="url(#glow-strong)" />
+                            <circle cx="650" cy="350" r="50" fill={simState.coreStability >= 100 ? "#10b981" : "#0284c7"} opacity={0.7 + (simState.coreStability/200)} filter="url(#glow-strong)" pointerEvents="none" />
+                            <text x="650" y="356" fill="#fff" fontSize="20" fontWeight="bold" textAnchor="middle" pointerEvents="none" className="drop-shadow-lg">CORE</text>
+
+                            {/* Brighter Conduit connecting Pad to Core */}
+                            <path d="M 350 465 L 350 490 L 650 490 L 650 420" fill="none" stroke={simState.orbY >= 450 ? "#34d399" : "#64748b"} strokeWidth="10" strokeDasharray="20 15" opacity="0.95" className={simState.orbY >= 450 ? "animate-pulse" : ""} pointerEvents="none" filter={simState.orbY >= 450 ? "url(#glow-strong)" : ""} />
+                            
+                            {/* Fixed Target Pad Position (X=350) - Safely away from left HUD */}
+                            <rect x="300" y="460" width="100" height="16" fill="#10b981" filter="url(#glow-strong)" rx="5" pointerEvents="none" stroke="#a7f3d0" strokeWidth="4" />
+                            <text x="350" y="488" fill="#ecfdf5" fontSize="14" fontFamily="monospace" fontWeight="bold" textAnchor="middle" pointerEvents="none">TRANSFER PAD</text>
+
+                            <g transform={`translate(350, ${simState.orbY})`} className={simState.l10Stage === 1 && !simState.isFalling ? 'cursor-ns-resize touch-manipulation' : 'pointer-events-none'}>
+                            <circle data-type="orb" r="30" fill="url(#orbGrad)" stroke="#ffffff" strokeWidth="4" filter="url(#glow-strong)"/>
+                            <text x="0" y="6" fill="#083344" fontSize="14" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" pointerEvents="none">{simState.mass}kg</text>
+                            </g>
+                        </g>
+                    )}
+
+                    {/* Unblocked Orb rendering for Levels 1-7 including spring and conservation! */}
+                    {currentLevel < 8 ? (
+                        <React.Fragment>
+                        {(currentLevel < 5 && (simState.orbY < simState.referenceY - 5 || simState.orbY > simState.referenceY + 5)) && (
+                            <g className="height-indicator" opacity="0.95" pointerEvents="none">
+                            <line x1={simState.orbX} y1={simState.orbY} x2={simState.orbX} y2={simState.referenceY} stroke="#67e8f9" strokeWidth="4" strokeDasharray="10,8" filter="url(#glow-strong)" />
+                            <rect x={simState.orbX + 35} y={simState.orbY + (simState.referenceY - simState.orbY)/2 - 16} width="80" height="32" rx="6" fill="#0f172a" stroke="#67e8f9" strokeWidth="2" />
+                            <text x={simState.orbX + 75} y={simState.orbY + (simState.referenceY - simState.orbY)/2 + 5} fill="#ffffff" fontSize="16" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
+                                {((simState.referenceY - simState.orbY) / simState.pixelsPerMeter).toFixed(2)}m
+                            </text>
+                            </g>
+                        )}
+                        {/* Unified Brighter Orb for Gameplay */}
+                        <g transform={`translate(${simState.orbX}, ${simState.orbY})`} className={currentLevel === 6 || currentLevel === 7 ? 'pointer-events-none' : (simState.isDragging ? 'cursor-grabbing' : (simState.isFalling ? 'pointer-events-none' : (currentLevel === 5 ? 'cursor-ew-resize touch-manipulation' : 'cursor-ns-resize touch-manipulation')))}>
+                            <circle data-type="orb" r="30" fill="url(#orbGrad)" stroke="#ffffff" strokeWidth="4" filter="url(#glow-strong)"/>
+                            <text x="0" y="6" fill="#083344" fontSize="14" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" pointerEvents="none">{simState.mass}kg</text>
+                        </g>
+                        </React.Fragment>
+                    ) : null}
+                </svg>
+                </div>
+            );
+        };
+
+        const GameShell = ({ gameState, setGameState }) => {
+            const [simState, setSimState] = useState(INITIAL_SIM_STATE);
+            const [missionStage, setMissionStage] = useState('INTRO'); 
+            const [modalState, setModalState] = useState({ type: null }); 
+            const [toastMessage, setToastMessage] = useState(null);
+            
+            const currentLevel = gameState.currentLevel;
+            const levelInfo = LEVELS.find(l => l.id === currentLevel) || LEVELS[0];
+
+            const resetSim = useCallback(() => {
+                setSimState(prev => ({
+                ...INITIAL_SIM_STATE,
+                mass: prev.mass, history: [],
+                orbY: currentLevel === 7 ? 150 : (currentLevel === 6 ? 100 : (currentLevel === 9 ? 460 - (prev.l9Height * prev.pixelsPerMeter) : (currentLevel === 5 ? 400 : 200))),
+                orbX: currentLevel === 7 ? 200 : (currentLevel === 4 ? 400 : (currentLevel === 5 ? 400 : 500)),
+                referenceY: 500, springK: prev.springK, velocity: 0, isFalling: false, isPaused: false, l7Progress: 0, l7Animating: false,
+                l6Completed: false, l5Mode: 'IDLE',
+                l8X: 300, l8V: 0, l8TotalE: 250, l8Mode: 'ANALYZE',
+                l9State: 'IDLE', l9MaxCompression: 0, l9Height: prev.l9Height, l9Mass: prev.l9Mass, l9SpringK: prev.l9SpringK,
+                l10Stage: prev.l10Stage, coreStability: prev.coreStability
+                }));
+            }, [currentLevel]);
+
+            useEffect(() => {
+                if (missionStage === 'INTRO') {
+                setModalState({ type: 'intro', title: levelInfo.title, objective: levelInfo.objective });
+                resetSim();
+                }
+            }, [missionStage, currentLevel, levelInfo, resetSim]);
+
+            const handleStartMission = () => {
+                setModalState({ type: null });
+                setMissionStage('EXPERIMENT');
+            };
+
+            const completeLevel = (levelId, xpReward, nextLevelId, badge, equations = []) => {
+                setGameState(p => {
+                const newScores = {...p.levelScores};
+                newScores[levelId] = (newScores[levelId] || 0) + xpReward;
+
+                const newState = {
+                    ...p,
+                    stage: GAME_STAGES.PROGRESS,
+                    completedMissions: [...new Set([...p.completedMissions, levelId])],
+                    unlockedLevels: nextLevelId ? [...new Set([...p.unlockedLevels, nextLevelId])] : p.unlockedLevels,
+                    badges: badge ? [...new Set([...p.badges, badge])] : p.badges,
+                    playerXP: p.playerXP + xpReward,
+                    unlockedEquations: [...new Set([...p.unlockedEquations, ...equations])],
+                    levelScores: newScores
+                };
+                
+                sendProgressToGoogleSheet(newState);
+                return newState;
+                });
+            };
+
+            const renderLeftPanel = () => {
+                if (currentLevel === 1) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-cyan-400/40 shadow-[0_0_40px_rgba(6,182,212,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-cyan-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><Target size={18}/> Mission 01</h3>
+                        <p className="text-sm text-slate-100 mb-4 font-serif leading-relaxed font-bold">Drag the glowing orb to change its height. Notice how the Gravitational Energy changes. Then click release!</p>
+                        {simState.hasLanded && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-emerald-900/50 border-2 border-emerald-500 p-4 rounded-lg mb-4 shadow-inner">
+                            <span className="text-emerald-300 font-bold text-xs uppercase block mb-1">Discovery!</span>
+                            <span className="text-white text-lg font-mono font-bold drop-shadow-md">V = mgh</span>
+                            <p className="text-xs text-emerald-100 mt-2 font-bold">Energy is stored based on vertical position.</p>
+                            </div>
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(1, 100, 2, 'HEIGHT HUNTER', ['pe'])}>
+                            COMPLETE LEVEL 01
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 2) {
+                const pe = simState.mass * simState.gravity * ((simState.referenceY - simState.orbY) / simState.pixelsPerMeter);
+                const isTargetReached = pe >= 95 && pe <= 105;
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-cyan-400/40 shadow-[0_0_40px_rgba(6,182,212,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-cyan-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><Target size={18}/> Target: 100 J</h3>
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Mass (kg)</span><span className="text-sm font-mono text-white font-bold">{simState.mass.toFixed(1)}</span></div>
+                        <input type="range" min="1" max="5" step="0.5" value={simState.mass} onChange={(e) => setSimState(p => ({...p, mass: parseFloat(e.target.value)}))} className="w-full accent-purple-400 mb-6 h-2 touch-manipulation cursor-pointer" disabled={simState.isFalling}/>
+                        <p className="text-xs text-slate-200 mb-4 italic leading-relaxed font-bold">Drag the orb and adjust mass to reach EXACTLY 100 J of Gravitational Energy.</p>
+                        {isTargetReached && !simState.isFalling && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(2, 150, 3, 'ENERGY ENGINEER')}>
+                            COMPLETE LEVEL 02
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 3) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-amber-400/40 shadow-[0_0_40px_rgba(245,158,11,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-amber-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><Activity size={18}/> Energy Conversion</h3>
+                        <p className="text-sm text-slate-100 mb-5 font-serif leading-relaxed font-bold">Drop the orb and watch Gravitational Energy convert cleanly into Kinetic Energy.</p>
+                        {simState.hasLanded && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-amber-900/50 border-2 border-amber-500 p-4 rounded-lg mb-4 shadow-inner">
+                            <span className="text-amber-300 font-bold text-xs uppercase block mb-1">Conversion Complete!</span>
+                            <span className="text-white text-lg font-mono font-bold drop-shadow-md">v = √(2gh)</span>
+                            </div>
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(3, 150, 4, 'ENERGY TRANSFORMER', ['ke', 'te', 'conv'])}>
+                            COMPLETE LEVEL 03
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 4) {
+                const pe = simState.mass * simState.gravity * ((simState.referenceY - simState.orbY) / simState.pixelsPerMeter);
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-blue-400/40 shadow-[0_0_40px_rgba(59,130,246,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-blue-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><ArrowDownCircle size={18}/> Invisible Reference</h3>
+                        <p className="text-sm text-slate-100 mb-5 font-serif leading-relaxed font-bold">Drag the glowing dashed Reference Level line up and down to change the zero point.</p>
+                        {pe <= 0 && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-blue-900/50 border-2 border-blue-500 p-4 rounded-lg mb-4 shadow-inner">
+                            <span className="text-blue-300 font-bold text-xs uppercase block mb-1">Zero Reached!</span>
+                            <p className="text-xs text-blue-100 font-bold">You proved that potential energy depends on where you place your zero reference.</p>
+                            </div>
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(4, 100, 5, 'REFERENCE MASTER', ['delta_v', 'work_pe'])}>
+                            COMPLETE LEVEL 04
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 5) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-emerald-400/40 shadow-[0_0_40px_rgba(16,185,129,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-emerald-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><ArrowRightCircle size={18}/> Spring Vault</h3>
+                        <p className="text-sm text-slate-100 mb-5 font-serif leading-relaxed font-bold">Drag the block to the left to compress the spring. When you let go, it oscillates. Click Launch to break it free!</p>
+                        <CyberButton variant="action" icon={Play} className="w-full py-2.5 text-xs font-bold mb-4 shadow-[0_0_20px_rgba(245,158,11,0.5)]" onClick={() => { setMissionStage('LAUNCH'); setSimState(p => ({...p, isFalling: true})); }} disabled={simState.isFalling || simState.isDetached}>
+                        LAUNCH PAYLOAD
+                        </CyberButton>
+                        {simState.isDetached && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-emerald-900/50 border-2 border-emerald-500 p-4 rounded-lg mb-4 shadow-inner">
+                            <span className="text-emerald-300 font-bold text-xs uppercase block mb-1">Elastic Energy!</span>
+                            <span className="text-white text-lg font-mono font-bold drop-shadow-md">U = ½kx²</span>
+                            </div>
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(5, 150, 6, 'SPRING MASTER', ['epe', 'hooke'])}>
+                            COMPLETE LEVEL 05
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 6) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-purple-400/40 shadow-[0_0_40px_rgba(168,85,247,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-purple-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><RefreshCw size={18}/> Conservation</h3>
+                        <p className="text-sm text-slate-100 mb-5 font-serif leading-relaxed font-bold">Drop the orb onto the spring. Watch the total mechanical energy stay constant as it bounces.</p>
+                        <CyberButton variant="action" icon={ArrowDownCircle} className="w-full py-2.5 text-xs font-bold mb-4 shadow-[0_0_20px_rgba(245,158,11,0.5)]" onClick={() => setSimState(p => ({...p, isFalling: true, initialFallState: {y: p.orbY, t0: performance.now()}}))} disabled={simState.isFalling}>
+                        DROP ORB
+                        </CyberButton>
+                        {simState.l6Completed && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(6, 200, 7, 'CONSERVATION MASTER', ['mech_energy_comb'])}>
+                            COMPLETE LEVEL 06
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 7) {
+                const currentWorkL7 = simState.l7Animating ? simState.mass * simState.gravity * ((simState.orbY - 150) / simState.pixelsPerMeter) : 0;
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 bottom-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8 overflow-y-auto scrollbar-hide">
+                    <GlassPanel className="p-4 border-indigo-400/40 shadow-[0_0_40px_rgba(99,102,241,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-indigo-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-3 flex items-center gap-2"><Route size={18}/> Conservative Force</h3>
+                        <p className="text-xs text-slate-100 mb-3 font-serif leading-relaxed font-bold">Select a path and observe the Work Done.</p>
+                        
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                        {['A', 'B', 'C', 'LOOP'].map(path => (
+                            <CyberButton key={path} variant={simState.l7Path === path ? 'primary' : 'secondary'} className="py-1.5 text-[10px] font-bold" onClick={() => setSimState(p => ({...p, l7Path: path, l7Progress: 0, orbX: 200, orbY: 150, velocity: 0}))} disabled={simState.l7Animating}>
+                            PATH {path}
+                            </CyberButton>
+                        ))}
+                        </div>
+
+                        <div className="bg-indigo-900/50 p-2 rounded-lg mt-1 mb-3 border-2 border-indigo-500 shadow-inner">
+                        <span className="text-[10px] font-bold text-slate-300 block mb-1 uppercase tracking-widest">Live Work by Gravity (+mgΔh):</span>
+                        <span className="text-xl font-mono text-indigo-300 font-bold drop-shadow-md">{currentWorkL7.toFixed(1)} J</span>
+                        </div>
+
+                        <CyberButton variant="action" icon={Play} className="w-full py-2 text-xs font-bold mb-3 shadow-[0_0_20px_rgba(245,158,11,0.5)]" onClick={() => setSimState(p => ({...p, l7Animating: true, l7Progress: 0}))} disabled={simState.l7Animating}>
+                        RUN PATH
+                        </CyberButton>
+
+                        {simState.l7Progress >= 1 && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-indigo-900/50 border-2 border-indigo-500 p-3 rounded-lg mb-3 shadow-inner">
+                            <span className="text-indigo-300 font-bold text-[10px] uppercase block mb-1">
+                                {simState.l7Path === 'LOOP' ? 'Net Work is Zero!' : 'Path Independent!'}
+                            </span>
+                            <p className="text-[10px] text-indigo-100 leading-tight font-bold">
+                                {simState.l7Path === 'LOOP' ? 'The object returned to its start height. Net gravitational work is 0 J.' : 'Work by gravity depends only on start and end height.'}
+                            </p>
+                            </div>
+                            <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(7, 200, 8, 'PATH BREAKER', ['conservative', 'closed_path'])}>
+                            COMPLETE LEVEL 07
+                            </CyberButton>
+                        </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 8) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                        <GlassPanel className="p-4 md:p-6 border-purple-400/40 shadow-[0_0_40px_rgba(168,85,247,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-purple-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><Activity size={18}/> Observatory Controls</h3>
+                        
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-[10px] md:text-xs font-bold text-purple-300 uppercase tracking-widest">Total Energy (E)</span>
+                            <span className="text-sm font-mono text-white bg-slate-800 px-2 py-1 rounded font-bold border border-slate-500 shadow-inner">{simState.l8TotalE} J</span>
+                        </div>
+                        <input type="range" min="50" max="600" step="10" value={simState.l8TotalE} onChange={(e) => setSimState(p => ({ ...p, l8TotalE: parseInt(e.target.value) }))} className="w-full accent-purple-400 mb-6 h-2 touch-manipulation cursor-pointer" />
+
+                        <div className="flex gap-2 mb-6">
+                            <CyberButton variant={simState.l8Mode === 'ANALYZE' ? 'primary' : 'secondary'} className="flex-1 py-2.5 text-xs font-bold" onClick={() => setSimState(p => ({...p, l8Mode: 'ANALYZE', l8V: 0, isPaused: false}))}>
+                            ANALYZE
+                            </CyberButton>
+                            <CyberButton variant={simState.l8Mode === 'SIMULATE' ? 'action' : 'secondary'} className="flex-1 py-2.5 text-xs font-bold" onClick={() => {
+                                const y = 300 - 100*Math.cos((simState.l8X-500)/100) - 40*Math.cos((simState.l8X-500)/50);
+                                const pe = (500 - y) * 2;
+                                if(pe > simState.l8TotalE) setToastMessage("Cannot simulate: particle is in a forbidden energy region.");
+                                else setSimState(p => ({...p, l8Mode: 'SIMULATE'}));
+                            }}>
+                            SIMULATE
+                            </CyberButton>
+                        </div>
+                        
+                        <CyberButton variant="success" icon={CheckCircle2} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(8, 250, 9, 'LANDSCAPE MASTER')}> COMPLETE LEVEL 08 </CyberButton>
+                        </GlassPanel>
+
+                        {simState.l8Mode === 'ANALYZE' && (
+                        <GlassPanel className="p-4 border-2 border-slate-600 bg-slate-900/95 shadow-2xl">
+                            <div className="text-[10px] text-slate-300 uppercase tracking-widest font-bold mb-3 border-b border-slate-700 pb-2">Local Analysis</div>
+                            {(() => {
+                                const x = simState.l8X;
+                                const y = 300 - 100*Math.cos((x-500)/100) - 40*Math.cos((x-500)/50);
+                                const dVdx = Math.sin((x-500)/100) + 0.8 * Math.sin((x-500)/50);
+                                const F = -dVdx;
+                                return (
+                                    <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-xs font-mono">
+                                        <div className="text-slate-300 font-bold">Pos (x):</div><div className="text-right text-white font-bold">{((x-500)/10).toFixed(1)} m</div>
+                                        <div className="text-slate-300 font-bold">Pot (V):</div><div className="text-right text-cyan-300 font-bold">{((500-y)*2).toFixed(1)} J</div>
+                                        <div className="text-slate-300 font-bold">Slope:</div><div className="text-right text-white font-bold">{dVdx.toFixed(2)} N</div>
+                                        <div className="text-slate-300 font-bold">Force:</div><div className={`text-right font-bold drop-shadow-md ${F > 0.05 ? 'text-green-400' : F < -0.05 ? 'text-red-400' : 'text-white'}`}>{F.toFixed(2)} N</div>
+                                    </div>
+                                );
+                            })()}
+                        </GlassPanel>
+                        )}
+                    </div>
+                );
+                }
+                if (currentLevel === 9) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-amber-400/40 shadow-[0_0_40px_rgba(245,158,11,0.3)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-amber-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><Target size={18}/> Energy Forge Config</h3>
+                        
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold text-cyan-300 uppercase tracking-widest">Drop Height</span><span className="text-sm font-mono text-white font-bold">{simState.l9Height.toFixed(1)} m</span></div>
+                        <input type="range" min="1" max="10" step="0.5" value={simState.l9Height} onChange={(e) => {setSimState(p => ({...p, l9Height: parseFloat(e.target.value), orbY: 460 - (parseFloat(e.target.value) * p.pixelsPerMeter)}))}} className="w-full accent-cyan-400 mb-5 h-2 touch-manipulation cursor-pointer" disabled={simState.l9State !== 'IDLE'}/>
+
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Spring Stiffness</span><span className="text-sm font-mono text-white font-bold">{simState.l9SpringK} N/m</span></div>
+                        <input type="range" min="100" max="1000" step="50" value={simState.l9SpringK} onChange={(e) => setSimState(p => ({...p, l9SpringK: parseInt(e.target.value)}))} className="w-full accent-emerald-400 mb-5 h-2 touch-manipulation cursor-pointer" disabled={simState.l9State !== 'IDLE'}/>
+                        
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Mass</span><span className="text-sm font-mono text-white font-bold">{simState.l9Mass.toFixed(1)} kg</span></div>
+                        <input type="range" min="1" max="10" step="1" value={simState.l9Mass} onChange={(e) => setSimState(p => ({...p, l9Mass: parseFloat(e.target.value)}))} className="w-full accent-purple-400 mb-6 h-2 touch-manipulation cursor-pointer" disabled={simState.l9State !== 'IDLE'}/>
+
+                        <CyberButton variant="action" icon={Play} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(245,158,11,0.5)]" onClick={() => setSimState(p=>({...p, l9State: 'FALLING', l9MaxCompression: 0}))} disabled={simState.l9State !== 'IDLE'}> DEPLOY TRAP </CyberButton>
+                        
+                        {simState.l9State === 'TRAPPED' && (
+                            <div className={`mt-4 p-4 rounded-lg border-2 text-sm font-bold text-center animate-in fade-in shadow-inner ${simState.l9MaxCompression > 0.25 ? 'bg-red-900/50 border-red-500 text-red-300' : 'bg-emerald-900/50 border-emerald-500 text-emerald-300'}`}>
+                            {simState.l9MaxCompression > 0.25 ? 'TRAP OVERLOADED! (Max Cap Exceeded)' : 'ENERGY TRAPPED SUCCESSFULLY!'}
+                            {simState.l9MaxCompression <= 0.25 && <CyberButton variant="success" className="w-full mt-4 py-2.5 shadow-[0_0_20px_rgba(34,197,94,0.5)]" onClick={() => completeLevel(9, 300, 10, 'ENERGY ARCHITECT')}>COMPLETE LEVEL 09</CyberButton>}
+                            </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                );
+                }
+                if (currentLevel === 10) {
+                return (
+                    <div className="absolute left-4 md:left-6 top-24 w-64 md:w-72 flex flex-col gap-4 z-20 animate-in slide-in-from-left-8">
+                    <GlassPanel className="p-4 md:p-6 border-emerald-400/40 shadow-[0_0_50px_rgba(16,185,129,0.4)] bg-slate-900/95">
+                        <h3 className="text-xs md:text-sm font-bold text-emerald-300 tracking-widest uppercase border-b-2 border-slate-600 pb-2 mb-4 flex items-center gap-2"><Hexagon size={18}/> Core Stabilization</h3>
+                        
+                        <div className="text-xs md:text-sm text-slate-100 italic mb-5 leading-relaxed font-serif bg-slate-800 p-3 rounded border border-slate-600 shadow-inner font-bold">Deliver EXACTLY 100J of Kinetic Energy to the transfer pad (left) to stabilize the core.</div>
+                        
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold text-cyan-300 uppercase tracking-widest">Drop Height (m)</span><span className="text-sm font-mono text-white font-bold">{((450 - simState.orbY)/simState.pixelsPerMeter).toFixed(2)}</span></div>
+                        <div className="flex justify-between items-center mb-2"><span className="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Mass (kg)</span><span className="text-sm font-mono text-white font-bold">{simState.mass.toFixed(1)}</span></div>
+                        <input type="range" min="1" max="10" step="0.5" value={simState.mass} onChange={(e) => setSimState(p => ({...p, mass: parseFloat(e.target.value)}))} className="w-full accent-purple-400 mb-6 h-2 touch-manipulation cursor-pointer" disabled={simState.isFalling}/>
+
+                        <CyberButton variant="action" icon={Play} className="w-full py-2.5 text-xs font-bold shadow-[0_0_20px_rgba(245,158,11,0.5)]" onClick={() => setSimState(p=>({...p, isFalling: true, initialFallState: { y: p.orbY, t0: performance.now() }}))} disabled={simState.isFalling}> DROP PAYLOAD </CyberButton>
+                        
+                        {simState.isFalling === false && simState.orbY >= 450 && (
+                            <div className="mt-4 animate-in fade-in slide-in-from-bottom-4">
+                            <CyberButton variant="success" className="w-full py-2.5 text-xs font-bold shadow-[0_0_30px_rgba(34,197,94,0.6)]" onClick={() => {
+                                const startY = simState.initialFallState ? simState.initialFallState.y : 50; 
+                                const ke = simState.mass * simState.gravity * ((450 - startY)/simState.pixelsPerMeter);
+                                if (Math.abs(ke - 100) < 5) {
+                                    setToastMessage(`Energy Transfer Optimal: ${ke.toFixed(1)}J. Stabilizing Core...`);
+                                    setSimState(p => ({...p, coreStability: 100}));
+                                    setTimeout(() => {
+                                        setGameState(p => {
+                                            const newScores = {...p.levelScores, 10: (p.levelScores[10] || 0) + 500};
+                                            const newState = {
+                                                ...p, stage: GAME_STAGES.MASTERY_REPORT,
+                                                completedMissions: [...new Set([...p.completedMissions, 10])],
+                                                badges: [...new Set([...p.badges, 'CORE STABILIZER', 'ENERGY MASTER'])],
+                                                playerXP: p.playerXP + 500,
+                                                levelScores: newScores,
+                                                endTime: Date.now()
+                                            };
+                                            sendProgressToGoogleSheet(newState);
+                                            return newState;
+                                        });
+                                    }, 3000);
+                                } else {
+                                    setToastMessage(`Energy Mismatch! Delivered ${ke.toFixed(1)}J. Core requires EXACTLY 100J.`);
+                                    resetSim();
+                                }
+                            }}> CONFIRM TRANSFER </CyberButton>
+                            </div>
+                        )}
+                    </GlassPanel>
+                    </div>
+                )
+                }
+                return null;
+            };
+
+            return (
+                <div className="relative w-full h-screen overflow-hidden bg-slate-900 font-sans select-none animate-gradient-x bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900">
+                <SimulationScene simState={simState} setSimState={setSimState} currentLevel={currentLevel} missionStage={missionStage} setToastMessage={setToastMessage} />
+                <TopHUD gameState={gameState} missionStage={missionStage} />
+                {renderLeftPanel()}
+                <EnergyHUD simState={simState} showGraph={false} currentLevel={currentLevel} missionStage={missionStage} />
+                
+                <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 z-20 w-full px-4 pointer-events-none">
+                    <GlassPanel className="px-3 py-2 md:px-4 md:py-3 flex gap-2 md:gap-4 pointer-events-auto border-slate-600 shadow-2xl bg-slate-900/95">
+                    <CyberButton variant="ghost" onClick={() => setModalState({type: 'pause'})} className="h-10 md:h-12 border-2 border-slate-500 bg-slate-800" icon={Pause} />
+                    <CyberButton variant="secondary" icon={RotateCcw} className="text-sm font-bold shadow-inner" onClick={resetSim}>RESET</CyberButton>
+                    {(currentLevel < 7 && currentLevel !== 5 && currentLevel !== 6) && (
+                        <CyberButton variant="action" icon={simState.isPaused ? Play : ArrowDownCircle} className="text-sm font-bold shadow-[0_0_20px_rgba(245,158,11,0.5)]" onClick={simState.isFalling ? () => setSimState(p=>({...p, isPaused: !p.isPaused})) : () => setSimState(p=>({...p, isFalling: true, initialFallState: {y: p.orbY, t0: performance.now()}}))}>
+                            {simState.isFalling ? (simState.isPaused ? 'RESUME' : 'PAUSE') : 'RELEASE'}
+                        </CyberButton>
+                    )}
+                    </GlassPanel>
+                </div>
+
+                {toastMessage && <InsightToast message={toastMessage} onClose={() => setToastMessage(null)} />}
+                
+                {modalState.type === 'intro' && (
+                    <Modal title={`Mission 0${currentLevel}: ${modalState.title || ''}`} type="info">
+                    <p className="text-base md:text-lg text-slate-100 mb-8 font-serif italic leading-relaxed font-bold">"{String(modalState.objective || '')}"</p>
+                    <CyberButton variant="primary" className="font-bold py-3 px-8 shadow-[0_0_30px_rgba(6,182,212,0.6)]" onClick={handleStartMission}>INITIATE MISSION</CyberButton>
+                    </Modal>
+                )}
+
+                {modalState.type === 'pause' && (
+                    <Modal title="System Paused" icon={Pause} type="info">
+                    <div className="flex flex-col gap-3 w-full">
+                        <CyberButton variant="primary" className="font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)]" onClick={() => setModalState({type: null})}>RESUME</CyberButton>
+                        <CyberButton variant="secondary" className="font-bold" onClick={() => { setMissionStage('INTRO'); setModalState({type: 'intro', title: levelInfo.title, objective: levelInfo.objective}); resetSim(); }}>RESTART MISSION</CyberButton>
+                        <CyberButton variant="ghost" className="font-bold" onClick={() => setGameState(p => ({...p, stage: GAME_STAGES.PROGRESS}))}>EXIT TO MAP</CyberButton>
+                    </div>
+                    </Modal>
+                )}
+                </div>
+            );
+        };
+
+        function App() {
+            const [gameState, setGameState] = useState(INITIAL_GAME_STATE);
+            const [isLoaded, setIsLoaded] = useState(false);
+
+            useEffect(() => {
+                try {
+                // Using a fresh local storage key (v2) to ensure a clean slate on first load.
+                const saved = localStorage.getItem('potential_energy_vault_v2');
+                if (saved) {
+                    setGameState(prev => ({...prev, ...JSON.parse(saved)}));
+                }
+                } catch(e) { console.warn("Failed to load local storage"); }
+                setIsLoaded(true);
+            }, []);
+
+            useEffect(() => {
+                if(isLoaded) {
+                localStorage.setItem('potential_energy_vault_v2', JSON.stringify(gameState));
+                }
+            }, [gameState, isLoaded]);
+
+            if(!isLoaded) return <div className="w-full h-screen bg-slate-900 flex items-center justify-center text-cyan-400 font-mono font-bold animate-pulse">INITIALIZING ENERGY VAULT...</div>;
+
+            switch (gameState.stage) {
+                case GAME_STAGES.LANDING: return <LandingScreen onEnter={() => setGameState(prev => ({ ...prev, stage: GAME_STAGES.REGISTRATION }))} onNavigate={(stage) => setGameState(prev => ({ ...prev, stage }))} />;
+                case GAME_STAGES.REGISTRATION: return <RegistrationScreen onRegister={(info) => setGameState(prev => ({...prev, playerInfo: info, startTime: Date.now(), stage: GAME_STAGES.PROGRESS}))} onBack={() => setGameState(prev => ({...prev, stage: GAME_STAGES.LANDING}))} />;
+                case GAME_STAGES.PLAYING: return <GameShell gameState={gameState} setGameState={setGameState} />;
+                case GAME_STAGES.PROGRESS: return <ProgressScreen gameState={gameState} setGameState={setGameState} />;
+                case GAME_STAGES.EQUATION_VAULT: return <EquationVaultScreen gameState={gameState} setGameState={setGameState} />;
+                case GAME_STAGES.MASTERY_REPORT: return <MasteryReportScreen gameState={gameState} setGameState={setGameState} />;
+                case GAME_STAGES.SETTINGS: return <SettingsScreen setGameState={setGameState} />;
+                default: return <LandingScreen onEnter={() => setGameState(prev => ({ ...prev, stage: GAME_STAGES.REGISTRATION }))} onNavigate={() => {}} />;
+            }
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
